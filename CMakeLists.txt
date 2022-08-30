@@ -11,6 +11,8 @@ find_package(catkin REQUIRED
     tf
 )
 
+find_package(Eigen3 REQUIRED)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gnss_imu_odom_ESKF
