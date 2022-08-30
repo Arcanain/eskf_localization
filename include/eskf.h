@@ -21,6 +21,7 @@ class ESKF
         void Predict();
 
         Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
+        Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d& vec);
 };
 
 /***********************************************************************
@@ -82,15 +83,10 @@ void ESKF::Predict()
     Eigen::Matrix3d R = x.quaternion.toRotationMatrix();
     //cout << R << endl;
     
-    // state update
+    // state update //
     x.position = x.position + x.velocity * dt + 0.5 * (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt * dt;
     x.velocity = x.velocity + (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt;
     //x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
-    //cout << x << endl;
-
-    cout << Eigen::Vector3d::UnitX() << endl;
-    //cout << imu_data.gyro(0) << endl;
-    //cout << Eigen::AngleAxisd(imu_data.gyro(0), Eigen::Vector3d::UnitX()) << endl;
 
     Eigen::Quaterniond quat_wdt = Eigen::Quaterniond(
     Eigen::AngleAxisd((imu_data.gyro(0) - x.gyro_bias(0)) * dt, Eigen::Vector3d::UnitX()) *
@@ -98,7 +94,11 @@ void ESKF::Predict()
     Eigen::AngleAxisd((imu_data.gyro(2) - x.gyro_bias(2)) * dt, Eigen::Vector3d::UnitZ()));
     x.quaternion = quat_wdt * x.quaternion;
 
+    // calcurate Fx
     
+    // calcurate Fi
+
+    // calcurate PPred
 }
 
 Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q)
@@ -109,6 +109,15 @@ Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Ei
     res.y() = p.w() * q.y() - p.x() * q.z() + p.y() * q.w() + p.z() * q.x();
     res.z() = p.w() * q.z() + p.x() * q.y() - p.y() * q.x() + p.z() * q.w();
     return res;
+}
+
+Eigen::Matrix3d ESKF::skewsym_matrix(const Eigen::Vector3d& vec)
+{
+    Eigen::Matrix3d mat;
+    mat <<  0.0,   -vec(2),  vec(1),
+          vec(2),  0.0,   -vec(0),
+         -vec(1),  vec(0),  0.0;
+    return mat;
 }
 
 #endif // ESKF
