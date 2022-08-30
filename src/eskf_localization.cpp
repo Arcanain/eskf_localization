@@ -14,6 +14,7 @@ int main(int argc, char**argv)
 	while(ros::ok()){
 		ros::spinOnce();
 		eskf.Init();
+		eskf.Predict();
 		//loop_rate.sleep();
 	}
 
