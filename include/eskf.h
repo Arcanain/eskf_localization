@@ -39,7 +39,17 @@ void ESKF::Init()
     //x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     //x.PEst.block<6, 6>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
 
-    cout << "TEST" << endl;
+    /*************/
+    /* test code */
+    /*************/
+    xEst x;
+    x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
+    x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
+    x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
+    //x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::MatrixXd::Identity(3, 3);
+
+    //cout << Eigen::Matrix3d::Identity() << endl;
+    cout << x.PEst.block<3, 3>(0, 0) << endl;
 }
 
 #endif // ESKF
