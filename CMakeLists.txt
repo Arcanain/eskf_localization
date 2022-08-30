@@ -21,9 +21,14 @@ catkin_package(
 )
 
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+  include
+  ${PROJECT_SOURCE_DIR}/../../devel/include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
+
+add_executable(eskf_localization src/eskf_localization.cpp)
+target_link_libraries(eskf_localization ${catkin_LIBRARIES})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 struct IMU_Data
 {
