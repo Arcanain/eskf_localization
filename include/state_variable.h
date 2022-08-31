@@ -22,7 +22,7 @@ struct GPS_Data
     Eigen::Vector3d ned;
 };
 
-struct xEst
+struct State
 {
     double timestamp;
 

@@ -12,12 +12,15 @@ class ESKF
         double position_noise = 1.2;
         double velocity_noise = 10.0;
         double posture_noise  = 1.0;
+
+        // Predict
+        Eigen::Matrix<double, 18, 18> Fx;
     public:
         ESKF();
         ~ESKF();
-        //void Init(const GPS_Data& gps_data, xEst& x);
+        //void Init(const GPS_Data& gps_data, State& x);
         void Init();
-        //void Predict(const IMU_Data& imu_data, xEst& x);
+        //void Predict(const IMU_Data& imu_data, State& x);
         void Predict();
 
         Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
@@ -26,6 +29,9 @@ class ESKF
         // quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
         Eigen::Quaterniond convert_euler_to_quatertion(const double roll, const double pitch, const double yaw);
+
+        // Predict
+        Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt);
 };
 
 /***********************************************************************
@@ -41,7 +47,7 @@ ESKF::~ESKF()
     cout << "ESKF Finish" << endl;
 }
 
-//void ESKF::Init(const GPS_Data& gps_data, xEst& x)
+//void ESKF::Init(const GPS_Data& gps_data, State& x)
 void ESKF::Init()
 {
     //x.timestamp = gps_data.timestamp;
@@ -50,7 +56,7 @@ void ESKF::Init()
     /*************/
     /* test code */
     /*************/
-    xEst x;
+    State x;
     x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
@@ -73,13 +79,13 @@ void ESKF::Init()
 * P_{k} = F_k P_{k-1} F_k^T + L Q_k L^T
 */
 
-//void Predict(const IMU_Data& imu_data, xEst& x);
+//void Predict(const IMU_Data& imu_data, State& x);
 void ESKF::Predict()
 {
     /*************/
     /* test code */
     /*************/
-    xEst x;
+    State x;
     IMU_Data imu_data;
     const double dt = imu_data.timestamp - x.timestamp;
     x.timestamp = imu_data.timestamp;
@@ -100,11 +106,24 @@ void ESKF::Predict()
     x.quaternion = quat_wdt * x.quaternion;
     */
 
-    // calcurate Fx
-    
-    // calcurate Fi
+    // calcurate Jacobian Fx
+    Fx = calcurate_Jacobian_Fx(imu_data.acc, x.acc_bias, R, dt);
+    //cout << Fx << endl;
+    // calcurate Jacobian Fi
 
     // calcurate PPred
+}
+
+Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
+{
+    Eigen::Matrix<double, 18, 18> Fx = Eigen::Matrix<double, 18, 18>::Identity();
+    Fx.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(3, 6) = - skewsym_matrix(R * (acc - acc_bias)) * dt;
+    Fx.block<3, 3>(3, 9) = - R * dt;
+    Fx.block<3, 3>(3, 15) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(6, 12) = - R * dt;
+
+    return Fx;
 }
 
 Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q)
