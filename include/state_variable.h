@@ -32,6 +32,7 @@ struct State
     Eigen::Vector3d acc_bias;
     Eigen::Vector3d gyro_bias;
     Eigen::Vector3d gravity;
+    Eigen::Matrix<double, 18, 18> PPred;
     Eigen::Matrix<double, 18, 18> PEst;
     Eigen::Matrix<double, 18, 1> Error;
 };

@@ -13,8 +13,15 @@ class ESKF
         double velocity_noise = 10.0;
         double posture_noise  = 1.0;
 
+        double acc_noise = 5e-4;
+        double gyro_noise = 5e-4;
+        double acc_bias_noise = 5e-4;
+        double gyro_bias_noise = 5e-4;
+
         // Predict
         Eigen::Matrix<double, 18, 18> Fx;
+        Eigen::Matrix<double, 18, 12> Fi;
+        Eigen::Matrix<double, 12, 12> Qi;
     public:
         ESKF();
         ~ESKF();
@@ -32,6 +39,8 @@ class ESKF
 
         // Predict
         Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt);
+        Eigen::Matrix<double, 18, 12> calcurate_Jacobian_Fi();
+        Eigen::Matrix<double, 12, 12> calcurate_Jacobian_Qi(const double dt);
 };
 
 /***********************************************************************
@@ -57,6 +66,10 @@ void ESKF::Init()
     /* test code */
     /*************/
     State x;
+
+    x.PPred.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
+    x.PPred.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
+    x.PPred.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
@@ -67,7 +80,7 @@ void ESKF::Init()
 /***********************************************************************
  * ESKF Predict Step
  **********************************************************************/
-/* state
+/* 
 * x  = [p v q] = [x y z vx vy vz qx qy qz qw]
 * dx = [dp dv dth] = [dx dy dz dvx dvy dvz dthx dthy dthz]
 *
@@ -109,9 +122,18 @@ void ESKF::Predict()
     // calcurate Jacobian Fx
     Fx = calcurate_Jacobian_Fx(imu_data.acc, x.acc_bias, R, dt);
     //cout << Fx << endl;
+
     // calcurate Jacobian Fi
+    Fi = calcurate_Jacobian_Fi();
+    //cout << Fi << endl;
+
+    // ccalcurate Jacobian Qi
+    Qi = calcurate_Jacobian_Qi(dt);
+    //cout << Qi << endl;
 
     // calcurate PPred
+    x.PPred = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
+    //cout << x.PPred << endl;
 }
 
 Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
@@ -124,6 +146,25 @@ Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, E
     Fx.block<3, 3>(6, 12) = - R * dt;
 
     return Fx;
+}
+
+Eigen::Matrix<double, 18, 12> ESKF::calcurate_Jacobian_Fi()
+{
+    Eigen::Matrix<double, 18, 12> Fi = Eigen::Matrix<double, 18, 12>::Zero();
+    Fi.block<12, 12>(3, 0) = Eigen::Matrix<double, 12, 12>::Identity();
+
+    return Fi;
+}
+
+Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
+{
+    Eigen::Matrix<double, 12, 12> Qi = Eigen::Matrix<double, 12, 12>::Zero();
+    Qi.block<3, 3>(0, 0) = dt * dt * acc_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(3, 3) = dt * dt * gyro_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(6, 6) = dt * acc_bias_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(9, 9) = dt * gyro_bias_noise * Eigen::Matrix3d::Identity();
+
+    return Qi;
 }
 
 Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q)
