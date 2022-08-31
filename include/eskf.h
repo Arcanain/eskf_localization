@@ -9,19 +9,26 @@ using namespace std;
 class ESKF
 {
     private:
+        // Init
         double position_noise = 1.2;
         double velocity_noise = 10.0;
         double posture_noise  = 1.0;
 
+        // Predict
         double acc_noise = 5e-4;
         double gyro_noise = 5e-4;
         double acc_bias_noise = 5e-4;
         double gyro_bias_noise = 5e-4;
 
-        // Predict
         Eigen::Matrix<double, 18, 18> Fx;
         Eigen::Matrix<double, 18, 12> Fi;
         Eigen::Matrix<double, 12, 12> Qi;
+
+        // Correct
+        double pose_noise = 1.2;
+
+        Eigen::Matrix<double, 3, 18> H;
+
     public:
         ESKF();
         ~ESKF();
@@ -29,18 +36,22 @@ class ESKF
         void Init();
         //void Predict(const IMU_Data& imu_data, State& x);
         void Predict();
-
-        Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
-        Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d& vec);
+        //void Update(const GPS_Data&, State&);
+        void Correct();
 
         // quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
         Eigen::Quaterniond convert_euler_to_quatertion(const double roll, const double pitch, const double yaw);
+        Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
+        Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d& vec);
 
         // Predict
         Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt);
         Eigen::Matrix<double, 18, 12> calcurate_Jacobian_Fi();
         Eigen::Matrix<double, 12, 12> calcurate_Jacobian_Qi(const double dt);
+
+        // Correct
+        Eigen::Matrix<double, 3, 18> calcurate_Jacobian_H(State& x);
 };
 
 /***********************************************************************
@@ -59,13 +70,13 @@ ESKF::~ESKF()
 //void ESKF::Init(const GPS_Data& gps_data, State& x)
 void ESKF::Init()
 {
-    //x.timestamp = gps_data.timestamp;
-    //x.position  = gps_data.ned;
-
     /*************/
     /* test code */
     /*************/
     State x;
+
+    //x.timestamp = gps_data.timestamp;
+    //x.position  = gps_data.ned;
 
     x.PPred.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PPred.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
@@ -73,10 +84,9 @@ void ESKF::Init()
     x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
-
-    //cout << x.PEst.block<3, 3>(0, 0) << endl;
 }
 
+// https://qiita.com/rsasaki0109/items/e969ad632cf321e25a6a
 /***********************************************************************
  * ESKF Predict Step
  **********************************************************************/
@@ -99,6 +109,7 @@ void ESKF::Predict()
     /* test code */
     /*************/
     State x;
+
     IMU_Data imu_data;
     const double dt = imu_data.timestamp - x.timestamp;
     x.timestamp = imu_data.timestamp;
@@ -136,6 +147,41 @@ void ESKF::Predict()
     //cout << x.PPred << endl;
 }
 
+// https://qiita.com/rsasaki0109/items/e969ad632cf321e25a6a
+/***********************************************************************
+ * ESKF Correct Step
+ **********************************************************************/
+/*
+* y = pobs = [xobs yobs zobs]
+*
+* K = P_k H^T (H P_k H^T + R)^{-1}
+*
+* dx = K (y_k - p_k )
+*
+* p_x = p_{k-1} + dp_k
+* v_k = v_{k-1} + dv_k
+* q_k = Rot(dth) q_{k-1}
+*
+* P_k = (I - KH)*P_{k-1}
+*/
+//void Correct(const GPS_Data&, State&)
+void ESKF::Correct()
+{
+    /*************/
+    /* test code */
+    /*************/
+    State x;
+    GPS_Data gps_data;
+
+    Eigen::Vector3d Y(gps_data.ned[0], gps_data.ned[1], gps_data.ned[2]);
+    Eigen::Vector3d X(x.position[0], x.position[1], x.position[2]);
+    Eigen::Matrix3d V = pose_noise * Eigen::Matrix3d::Identity();
+
+    // calcurate Jacobian H
+    H = calcurate_Jacobian_H(x);
+    //cout << H << endl;
+}
+
 Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
 {
     Eigen::Matrix<double, 18, 18> Fx = Eigen::Matrix<double, 18, 18>::Identity();
@@ -165,6 +211,25 @@ Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
     Qi.block<3, 3>(9, 9) = dt * gyro_bias_noise * Eigen::Matrix3d::Identity();
 
     return Qi;
+}
+
+Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
+{
+    Eigen::Matrix<double, 3, 19> Hx = Eigen::Matrix<double, 3, 19>::Zero();
+    Hx.block<3, 3>(0, 0) = Eigen::Matrix3d::Identity();
+
+    Eigen::Matrix<double, 19, 18> Xx = Eigen::Matrix<double, 19, 18>::Identity();
+    Eigen::Matrix<double, 4, 3> Q_theta;
+    Q_theta << - x.quaternion.x(), - x.quaternion.y(), - x.quaternion.z(), 
+                x.quaternion.w(), x.quaternion.z(), - x.quaternion.y(),
+                - x.quaternion.z(), x.quaternion.w(), x.quaternion.x(),
+                x.quaternion.y(), - x.quaternion.x(), x.quaternion.w();
+    Q_theta *= 0.5;
+    Xx.block<4, 3>(6, 6) = Q_theta;
+    
+    Eigen::Matrix<double, 3, 18> H = Hx * Xx;
+
+    return H;
 }
 
 Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q)
