@@ -39,7 +39,7 @@ class ESKF
         //void Update(const GPS_Data&, State&);
         void Correct();
 
-        // quaternion
+        // Quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
         Eigen::Quaterniond convert_euler_to_quatertion(const double roll, const double pitch, const double yaw);
         Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
@@ -147,6 +147,37 @@ void ESKF::Predict()
     //cout << x.PPred << endl;
 }
 
+Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
+{
+    Eigen::Matrix<double, 18, 18> Fx = Eigen::Matrix<double, 18, 18>::Identity();
+    Fx.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(3, 6) = - skewsym_matrix(R * (acc - acc_bias)) * dt;
+    Fx.block<3, 3>(3, 9) = - R * dt;
+    Fx.block<3, 3>(3, 15) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(6, 12) = - R * dt;
+
+    return Fx;
+}
+
+Eigen::Matrix<double, 18, 12> ESKF::calcurate_Jacobian_Fi()
+{
+    Eigen::Matrix<double, 18, 12> Fi = Eigen::Matrix<double, 18, 12>::Zero();
+    Fi.block<12, 12>(3, 0) = Eigen::Matrix<double, 12, 12>::Identity();
+
+    return Fi;
+}
+
+Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
+{
+    Eigen::Matrix<double, 12, 12> Qi = Eigen::Matrix<double, 12, 12>::Zero();
+    Qi.block<3, 3>(0, 0) = dt * dt * acc_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(3, 3) = dt * dt * gyro_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(6, 6) = dt * acc_bias_noise * Eigen::Matrix3d::Identity();
+    Qi.block<3, 3>(9, 9) = dt * gyro_bias_noise * Eigen::Matrix3d::Identity();
+
+    return Qi;
+}
+
 // https://qiita.com/rsasaki0109/items/e969ad632cf321e25a6a
 /***********************************************************************
  * ESKF Correct Step
@@ -180,37 +211,11 @@ void ESKF::Correct()
     // calcurate Jacobian H
     H = calcurate_Jacobian_H(x);
     //cout << H << endl;
-}
 
-Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
-{
-    Eigen::Matrix<double, 18, 18> Fx = Eigen::Matrix<double, 18, 18>::Identity();
-    Fx.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * dt;
-    Fx.block<3, 3>(3, 6) = - skewsym_matrix(R * (acc - acc_bias)) * dt;
-    Fx.block<3, 3>(3, 9) = - R * dt;
-    Fx.block<3, 3>(3, 15) = Eigen::Matrix3d::Identity() * dt;
-    Fx.block<3, 3>(6, 12) = - R * dt;
-
-    return Fx;
-}
-
-Eigen::Matrix<double, 18, 12> ESKF::calcurate_Jacobian_Fi()
-{
-    Eigen::Matrix<double, 18, 12> Fi = Eigen::Matrix<double, 18, 12>::Zero();
-    Fi.block<12, 12>(3, 0) = Eigen::Matrix<double, 12, 12>::Identity();
-
-    return Fi;
-}
-
-Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
-{
-    Eigen::Matrix<double, 12, 12> Qi = Eigen::Matrix<double, 12, 12>::Zero();
-    Qi.block<3, 3>(0, 0) = dt * dt * acc_noise * Eigen::Matrix3d::Identity();
-    Qi.block<3, 3>(3, 3) = dt * dt * gyro_noise * Eigen::Matrix3d::Identity();
-    Qi.block<3, 3>(6, 6) = dt * acc_bias_noise * Eigen::Matrix3d::Identity();
-    Qi.block<3, 3>(9, 9) = dt * gyro_bias_noise * Eigen::Matrix3d::Identity();
-
-    return Qi;
+    Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
+    x.Error = K * (Y - X);
+    x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
+    //cout << x.PEst << endl;
 }
 
 Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
@@ -232,6 +237,9 @@ Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
     return H;
 }
 
+/***********************************************************************
+ * Quaternion
+ **********************************************************************/
 Eigen::Quaterniond ESKF::kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q)
 {
     Eigen::Quaterniond res;
