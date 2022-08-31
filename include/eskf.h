@@ -36,8 +36,12 @@ class ESKF
         void Init();
         //void Predict(const IMU_Data& imu_data, State& x);
         void Predict();
-        //void Update(const GPS_Data&, State&);
+        //void Update(const GPS_Data& gps_data, State& x);
         void Correct();
+        //void State_update(State& x);
+        void State_update();
+        //void ESKF::Error_State_Reset(State& x);
+        void Error_State_Reset();
 
         // Quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
@@ -213,7 +217,8 @@ void ESKF::Correct()
     //cout << H << endl;
 
     Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
-    x.Error = K * (Y - X);
+    x.error = K * (Y - X);
+    //cout << x.error << endl;
     x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
     //cout << x.PEst << endl;
 }
@@ -235,6 +240,46 @@ Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
     Eigen::Matrix<double, 3, 18> H = Hx * Xx;
 
     return H;
+}
+
+/***********************************************************************
+ * State Update
+ **********************************************************************/
+//void state_update(State& x)
+void ESKF::State_update()
+{
+    /*************/
+    /* test code */
+    /*************/
+    State x;
+
+    Eigen::Vector3d error_pos = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(0, 0).transpose().data());
+    Eigen::Vector3d error_vel = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(3, 0).transpose().data());
+    Eigen::Vector3d error_ori = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(6, 0).transpose().data());
+    Eigen::Quaterniond error_quat = euler_to_quatertion(error_ori);
+
+    Eigen::Vector3d error_acc_bias = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(9, 0).transpose().data());
+    Eigen::Vector3d error_gyr_bias = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(12, 0).transpose().data());
+    Eigen::Vector3d error_gra = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(15, 0).transpose().data());
+
+    x.position = x.position + error_pos;
+    x.velocity = x.velocity + error_vel;
+    x.quaternion = kronecker_product(error_quat, x.quaternion);
+    x.acc_bias = x.acc_bias + error_acc_bias;
+    x.gyro_bias = x.gyro_bias + error_gyr_bias;
+    // x.gravity = x.gravity + error_gra;
+}
+
+//void ESKF::Error_State_Reset(State& x)
+void ESKF::Error_State_Reset()
+{
+    /*************/
+    /* test code */
+    /*************/
+    State x;
+
+    x.error.setZero();
+    //cout << x.error << endl;
 }
 
 /***********************************************************************

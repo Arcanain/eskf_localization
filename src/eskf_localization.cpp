@@ -16,6 +16,8 @@ int main(int argc, char**argv)
 		eskf.Init();
 		eskf.Predict();
 		eskf.Correct();
+		eskf.State_update();
+		eskf.Error_State_Reset();
 		//loop_rate.sleep();
 	}
 

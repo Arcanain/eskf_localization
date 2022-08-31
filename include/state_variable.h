@@ -34,7 +34,7 @@ struct State
     Eigen::Vector3d gravity;
     Eigen::Matrix<double, 18, 18> PPred;
     Eigen::Matrix<double, 18, 18> PEst;
-    Eigen::Matrix<double, 18, 1> Error;
+    Eigen::Matrix<double, 18, 1> error;
 };
 
 #endif // STATE_VARIABLE
