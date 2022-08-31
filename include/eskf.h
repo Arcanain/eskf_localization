@@ -22,6 +22,10 @@ class ESKF
 
         Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
         Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d& vec);
+
+        // quaternion
+        Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
+        Eigen::Quaterniond convert_euler_to_quatertion(const double roll, const double pitch, const double yaw);
 };
 
 /***********************************************************************
@@ -86,13 +90,15 @@ void ESKF::Predict()
     // state update //
     x.position = x.position + x.velocity * dt + 0.5 * (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt * dt;
     x.velocity = x.velocity + (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt;
-    //x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
+    x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
 
+    /*
     Eigen::Quaterniond quat_wdt = Eigen::Quaterniond(
     Eigen::AngleAxisd((imu_data.gyro(0) - x.gyro_bias(0)) * dt, Eigen::Vector3d::UnitX()) *
     Eigen::AngleAxisd((imu_data.gyro(1) - x.gyro_bias(1)) * dt, Eigen::Vector3d::UnitY()) *
     Eigen::AngleAxisd((imu_data.gyro(2) - x.gyro_bias(2)) * dt, Eigen::Vector3d::UnitZ()));
     x.quaternion = quat_wdt * x.quaternion;
+    */
 
     // calcurate Fx
     
@@ -118,6 +124,40 @@ Eigen::Matrix3d ESKF::skewsym_matrix(const Eigen::Vector3d& vec)
           vec(2),  0.0,   -vec(0),
          -vec(1),  vec(0),  0.0;
     return mat;
+}
+
+
+// https://qiita.com/take4eng/items/ae487c82a6f7d60ceba8
+Eigen::Quaterniond ESKF::euler_to_quatertion(Eigen::Vector3d euler)
+{
+    double roll = euler[0];
+    double pitch = euler[1];
+    double yaw = euler[2];
+
+    Eigen::Quaterniond quad = convert_euler_to_quatertion(roll, pitch, yaw);
+
+    return quad;
+}
+
+Eigen::Quaterniond ESKF::convert_euler_to_quatertion(const double roll, const double pitch, const double yaw)
+{
+    double cr = cos(0.5 * roll);
+    double sr = sin(0.5 * roll);
+    double cp = cos(0.5 * pitch);
+    double sp = sin(0.5 * pitch);
+    double cy = cos(0.5 * yaw);
+    double sy = sin(0.5 * yaw);
+
+    Eigen::Vector4d vq;
+
+    vq[0] = cy * cp * cr + sy * sp * sr;
+    vq[1] = cy * cp * sr - sy * sp * cr;
+    vq[2] = sy * cp * sr + cy * sp * cr;
+    vq[3] = sy * cp * cr - cy * sp * sr;
+
+    Eigen::Quaterniond q(vq);
+    
+    return q;
 }
 
 #endif // ESKF
