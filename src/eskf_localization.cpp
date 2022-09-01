@@ -14,11 +14,13 @@ int main(int argc, char**argv)
     //ros::Rate loop_rate(50);
 	while(ros::ok()){
 		ros::spinOnce();
+		/*
 		eskf.Init();
 		eskf.Predict();
 		eskf.Correct();
 		eskf.State_update();
 		eskf.Error_State_Reset();
+		*/
 		//loop_rate.sleep();
 	}
 

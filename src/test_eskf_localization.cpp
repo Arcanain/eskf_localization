@@ -7,8 +7,9 @@ int main(int argc, char**argv)
     ros::init(argc, argv, "test_eskf_localization");
     ros::NodeHandle n;
 
-    double lat0 = 47.5115140833;
-    double lon0 = 6.79310693333;
+    // gazebo simulator
+    double lat0 = 49.89999999967053;
+    double lon0 = 8.899999999175634;
     ROS_Interface ros_interface(n, lat0, lon0);
 
 	while(ros::ok()){

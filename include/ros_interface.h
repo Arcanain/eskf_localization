@@ -37,6 +37,9 @@ class ROS_Interface
         State x;
         IMU_Data imu_data;
         GPS_Data gps_data;
+
+        // ESKF
+        ESKF eskf;
     public:
         ROS_Interface(ros::NodeHandle &n, double lat, double lon);
         ~ROS_Interface();
@@ -62,8 +65,8 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     estimated_path_pub = nh.advertise<nav_msgs::Path>("/estimated_path", 10);
     estimated_pub = nh.advertise<geometry_msgs::Pose>("/estimated_pose", 10);
 
-    // Subscriber
-    gps_sub = nh.subscribe("/fix", 10, &ROS_Interface::gps_callback, this);
+    // Subscriber for gazebo simulator
+    gps_sub = nh.subscribe("/gps/fix", 10, &ROS_Interface::gps_callback, this);
     imu_sub = nh.subscribe("/imu/data", 10, &ROS_Interface::imu_callback, this);
 
     gps_path.header.frame_id = "map";
@@ -92,13 +95,38 @@ ROS_Interface::~ROS_Interface()
 
 void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 {
-    cout << "IMU callback" << endl;
+    //cout << "IMU callback" << endl;
     data_conversion_imu(imu_msg, imu_data);
+
+    eskf.Predict(imu_data, x);
+
+    estimated_pose.position.x = x.position[0];
+    estimated_pose.position.y = x.position[1];
+    estimated_pose.position.z = x.position[2];
+    estimated_pose.orientation.w = x.quaternion.w();
+    estimated_pose.orientation.x = x.quaternion.x();
+    estimated_pose.orientation.y = x.quaternion.y();
+    estimated_pose.orientation.z = x.quaternion.z();
+    estimated_pub.publish(estimated_pose);
+
+    geometry_msgs::PoseStamped estimated_point;
+    estimated_point.header.frame_id = "map";
+    estimated_point.header.stamp = ros::Time::now();
+    estimated_point.pose.position.x = x.position[0];
+    estimated_point.pose.position.y = x.position[1];
+    estimated_point.pose.position.z = 0;
+    estimated_point.pose.orientation.w = x.quaternion.w();
+    estimated_point.pose.orientation.x = x.quaternion.x();
+    estimated_point.pose.orientation.y = x.quaternion.y();
+    estimated_point.pose.orientation.z = x.quaternion.z();
+
+    estimated_path.poses.push_back(estimated_point);
+    estimated_path_pub.publish(estimated_path);
 }
 
 void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
 {
-    cout << "GPS callback" << endl;
+    //cout << "GPS callback" << endl;
     data_conversion_gps(gps_msg, gps_data);
 }   
 

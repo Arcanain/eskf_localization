@@ -34,8 +34,8 @@ class ESKF
         ~ESKF();
         //void Init(const GPS_Data& gps_data, State& x);
         void Init();
-        //void Predict(const IMU_Data& imu_data, State& x);
-        void Predict();
+        void Predict(const IMU_Data& imu_data, State& x);
+        //void Predict();
         //void Update(const GPS_Data& gps_data, State& x);
         void Correct();
         //void State_update(State& x);
@@ -106,15 +106,15 @@ void ESKF::Init()
 * P_{k} = F_k P_{k-1} F_k^T + L Q_k L^T
 */
 
-//void Predict(const IMU_Data& imu_data, State& x);
-void ESKF::Predict()
+void ESKF::Predict(const IMU_Data& imu_data, State& x)
+//void ESKF::Predict()
 {
     /*************/
     /* test code */
     /*************/
-    State x;
+    //State x;
+    //IMU_Data imu_data;
 
-    IMU_Data imu_data;
     const double dt = imu_data.timestamp - x.timestamp;
     x.timestamp = imu_data.timestamp;
 
