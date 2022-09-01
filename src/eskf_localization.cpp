@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "eskf.h"
+#include "ros_interface.h"
 
 int main(int argc, char**argv)
 {
