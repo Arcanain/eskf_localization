@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <iostream>
 
 #include "ros_interface.h"
 

@@ -44,6 +44,8 @@ class ROS_Interface
         // callback function
         void gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg);
         void imu_callback(const sensor_msgs::ImuConstPtr& imu_msg);
+        void data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data);
+        void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
 };
 
 /***********************************************************************
@@ -88,14 +90,38 @@ ROS_Interface::~ROS_Interface()
     cout << "ROS_Interface Finish" << endl;
 }
 
-void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
-{
-    cout << "IMU callback" << endl;
-}
-
 void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 {
+    cout << "IMU callback" << endl;
+    data_conversion_imu(imu_msg, imu_data);
+}
+
+void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
+{
     cout << "GPS callback" << endl;
+    data_conversion_gps(gps_msg, gps_data);
+}   
+
+void ROS_Interface::data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data)
+{
+    imu_data.timestamp = imu_msg->header.stamp.toSec();
+
+    imu_data.acc = Eigen::Vector3d(imu_msg->linear_acceleration.x, 
+                                   imu_msg->linear_acceleration.y,
+                                   imu_msg->linear_acceleration.z);
+
+    imu_data.gyro = Eigen::Vector3d(imu_msg->angular_velocity.x,
+                                    imu_msg->angular_velocity.y,
+                                    imu_msg->angular_velocity.z);
+}
+
+void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data)
+{
+    gps_data.timestamp = gps_msg->header.stamp.toSec();
+
+    gps_data.lla = Eigen::Vector3d(gps_msg->latitude,
+                                   gps_msg->longitude,
+                                   gps_msg->altitude);
 }
 
 #endif // ROS_INTERFACE
