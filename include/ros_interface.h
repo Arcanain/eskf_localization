@@ -54,6 +54,9 @@ class ROS_Interface
 
         int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
+        bool map_projection_initialized(const struct map_projection_reference_s *ref);
+        int map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y);
+        double constrain(double val, double min, double max);
 };
 
 /***********************************************************************
@@ -109,7 +112,42 @@ void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
     //cout << "IMU callback" << endl;
     data_conversion_imu(imu_msg, imu_data);
 
+    if (!init) {
+        return;
+    }
+
     eskf.Predict(imu_data, x);
+}
+
+void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
+{
+    //cout << "GPS callback" << endl;
+    data_conversion_gps(gps_msg, gps_data);
+    //cout << gps_data.ned[0] << endl;
+    //cout << gps_data.ned[1] << endl;
+
+    if(!init){
+        eskf.Init(gps_data, x);
+        init = true;
+        return;
+    }
+
+    eskf.Correct(gps_data, x);
+    eskf.State_update(x);
+    eskf.Error_State_Reset(x);
+
+    geometry_msgs::PoseStamped point;
+    point.header.frame_id = "map";
+    point.header.stamp = ros::Time::now();
+    point.pose.position.x = gps_data.ned[0];
+    point.pose.position.y = gps_data.ned[1];
+    point.pose.position.z = 0;
+    point.pose.orientation.w = 0;
+    point.pose.orientation.x = 0;
+    point.pose.orientation.y = 0;
+    point.pose.orientation.z = 0;
+    gps_path.poses.push_back(point);
+    gps_path_pub.publish(gps_path);
 
     estimated_pose.position.x = x.position[0];
     estimated_pose.position.y = x.position[1];
@@ -133,12 +171,6 @@ void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 
     estimated_path.poses.push_back(estimated_point);
     estimated_path_pub.publish(estimated_path);
-}
-
-void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
-{
-    //cout << "GPS callback" << endl;
-    data_conversion_gps(gps_msg, gps_data);
 }   
 
 void ROS_Interface::data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data)
@@ -161,6 +193,10 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
     gps_data.lla = Eigen::Vector3d(gps_msg->latitude,
                                    gps_msg->longitude,
                                    gps_msg->altitude);
+
+    float x, y;
+    map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
+    gps_data.ned << x, y, -gps_msg->altitude;
 }
 
 int ROS_Interface::map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0)
@@ -184,5 +220,55 @@ int ROS_Interface::map_projection_init_timestamped(struct map_projection_referen
 	return 0;
 }
 
+bool ROS_Interface::map_projection_initialized(const struct map_projection_reference_s *ref)
+{
+	return ref->init_done;
+}
+
+int ROS_Interface::map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y)
+{
+    static constexpr double CONSTANTS_RADIUS_OF_EARTH = 6371000; //[m]
+
+	if (!map_projection_initialized(ref)) {
+		return -1;
+	}
+    /*
+	const double lat_rad = radians(lat);
+	const double lon_rad = radians(lon);
+    */
+    const double lat_rad = lat * (M_PI / 180.0);
+	const double lon_rad = lon * (M_PI / 180.0);
+
+	const double sin_lat = sin(lat_rad);
+	const double cos_lat = cos(lat_rad);
+
+	const double cos_d_lon = cos(lon_rad - ref->lon_rad);
+
+	const double arg = constrain(ref->sin_lat * sin_lat + ref->cos_lat * cos_lat * cos_d_lon, -1.0,  1.0);
+	const double c = acos(arg);
+
+	double k = 1.0;
+
+	if (fabs(c) > 0) {
+		k = (c / sin(c));
+	}
+
+	*x = static_cast<float>(k * (ref->cos_lat * sin_lat - ref->sin_lat * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH);
+	*y = static_cast<float>(k * cos_lat * sin(lon_rad - ref->lon_rad) * CONSTANTS_RADIUS_OF_EARTH);
+
+	return 0;
+}
+
+double ROS_Interface::constrain(double val, double min, double max)
+{
+    if(val > max){
+        return max;
+    }
+    else if(val < min){
+        return min;
+    }
+    else
+        return val;
+}
 
 #endif // ROS_INTERFACE

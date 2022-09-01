@@ -32,16 +32,16 @@ class ESKF
     public:
         ESKF();
         ~ESKF();
-        //void Init(const GPS_Data& gps_data, State& x);
-        void Init();
+        void Init(const GPS_Data& gps_data, State& x);
+        //void Init();
         void Predict(const IMU_Data& imu_data, State& x);
         //void Predict();
-        //void Update(const GPS_Data& gps_data, State& x);
-        void Correct();
-        //void State_update(State& x);
-        void State_update();
-        //void ESKF::Error_State_Reset(State& x);
-        void Error_State_Reset();
+        void Correct(const GPS_Data& gps_data, State& x);
+        //void Correct();
+        void State_update(State& x);
+        //void State_update();
+        void Error_State_Reset(State& x);
+        //void Error_State_Reset();
 
         // Quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
@@ -71,16 +71,16 @@ ESKF::~ESKF()
     cout << "ESKF Finish" << endl;
 }
 
-//void ESKF::Init(const GPS_Data& gps_data, State& x)
-void ESKF::Init()
+void ESKF::Init(const GPS_Data& gps_data, State& x)
+//void ESKF::Init()
 {
     /*************/
     /* test code */
     /*************/
-    State x;
+    //State x;
 
-    //x.timestamp = gps_data.timestamp;
-    //x.position  = gps_data.ned;
+    x.timestamp = gps_data.timestamp;
+    x.position  = gps_data.ned;
 
     x.PPred.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PPred.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
@@ -199,14 +199,14 @@ Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
 *
 * P_k = (I - KH)*P_{k-1}
 */
-//void Correct(const GPS_Data&, State&)
-void ESKF::Correct()
+void ESKF::Correct(const GPS_Data& gps_data, State& x)
+//void ESKF::Correct()
 {
     /*************/
     /* test code */
     /*************/
-    State x;
-    GPS_Data gps_data;
+    //State x;
+    //GPS_Data gps_data;
 
     Eigen::Vector3d Y(gps_data.ned[0], gps_data.ned[1], gps_data.ned[2]);
     Eigen::Vector3d X(x.position[0], x.position[1], x.position[2]);
@@ -245,13 +245,13 @@ Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
 /***********************************************************************
  * State Update
  **********************************************************************/
-//void state_update(State& x)
-void ESKF::State_update()
+void ESKF::State_update(State& x)
+//void ESKF::State_update()
 {
     /*************/
     /* test code */
     /*************/
-    State x;
+    //State x;
 
     Eigen::Vector3d error_pos = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(0, 0).transpose().data());
     Eigen::Vector3d error_vel = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(3, 0).transpose().data());
@@ -270,13 +270,13 @@ void ESKF::State_update()
     // x.gravity = x.gravity + error_gra;
 }
 
-//void ESKF::Error_State_Reset(State& x)
-void ESKF::Error_State_Reset()
+void ESKF::Error_State_Reset(State& x)
+//void ESKF::Error_State_Reset()
 {
     /*************/
     /* test code */
     /*************/
-    State x;
+    //State x;
 
     x.error.setZero();
     //cout << x.error << endl;
