@@ -30,6 +30,9 @@ include_directories(
 add_executable(eskf_localization src/eskf_localization.cpp)
 target_link_libraries(eskf_localization ${catkin_LIBRARIES})
 
+add_executable(test_eskf_localization src/test_eskf_localization.cpp)
+target_link_libraries(test_eskf_localization ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/gnss_imu_odom_ESKF.cpp
