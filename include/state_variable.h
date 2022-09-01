@@ -37,4 +37,14 @@ struct State
     Eigen::Matrix<double, 18, 1> error;
 };
 
+/* lat/lon are in radians */
+struct map_projection_reference_s {
+	uint64_t timestamp;
+	double lat_rad;
+	double lon_rad;
+	double sin_lat;
+	double cos_lat;
+	bool init_done;
+};
+
 #endif // STATE_VARIABLE

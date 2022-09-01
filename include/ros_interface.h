@@ -37,7 +37,8 @@ class ROS_Interface
         State x;
         IMU_Data imu_data;
         GPS_Data gps_data;
-
+        map_projection_reference_s map_ref;
+        
         // ESKF
         ESKF eskf;
     public:
@@ -58,7 +59,7 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
 {
     cout << "ROS_Interface Start!" << endl;
     nh = n;
-    //cout << lat << endl;
+    init = false;
 
     // Publisher
     gps_path_pub = nh.advertise<nav_msgs::Path>("/gps_path", 10);
