@@ -2,6 +2,7 @@
 #define __ROS_INTERFACE__
 
 #include <iostream>
+#include <cmath>
 #include "ros/ros.h"
 #include "nav_msgs/Path.h"
 #include "nav_msgs/Odometry.h"
@@ -38,7 +39,7 @@ class ROS_Interface
         IMU_Data imu_data;
         GPS_Data gps_data;
         map_projection_reference_s map_ref;
-        
+
         // ESKF
         ESKF eskf;
     public:
@@ -50,6 +51,9 @@ class ROS_Interface
         void imu_callback(const sensor_msgs::ImuConstPtr& imu_msg);
         void data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data);
         void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
+
+        int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
+        int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
 };
 
 /***********************************************************************
@@ -87,6 +91,12 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     x.PPred = Eigen::Matrix<double, 18, 18>::Zero();
     x.PEst = Eigen::Matrix<double, 18, 18>::Zero();
     x.error = Eigen::Matrix<double, 18, 1>::Zero();
+
+    map_projection_init(&map_ref, lat, lon);
+    /*
+    cout << map_ref.lat_rad << endl;
+    cout << map_ref.lon_rad << endl;
+    */
 }
 
 ROS_Interface::~ROS_Interface()
@@ -152,5 +162,27 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
                                    gps_msg->longitude,
                                    gps_msg->altitude);
 }
+
+int ROS_Interface::map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0)
+{
+	return map_projection_init_timestamped(ref, lat_0, lon_0);
+}
+
+int ROS_Interface::map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0)
+{
+
+	//ref->lat_rad = radians(lat_0);
+	//ref->lon_rad = radians(lon_0);
+    ref->lat_rad = lat_0 * (M_PI / 180.0);
+	ref->lon_rad = lon_0 * (M_PI / 180.0);
+	ref->sin_lat = sin(ref->lat_rad);
+	ref->cos_lat = cos(ref->lat_rad);
+
+	// ref->timestamp = timestamp;
+	ref->init_done = true;
+
+	return 0;
+}
+
 
 #endif // ROS_INTERFACE
