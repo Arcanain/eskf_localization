@@ -1,5 +1,5 @@
 # gnss_imu_odom_ESKF
-gnss_imu_odom_ESKF
+gnss imu odometry fusion localization by ESKF  
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
