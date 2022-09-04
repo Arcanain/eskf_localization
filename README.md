@@ -19,6 +19,9 @@ ROS : noetic
 - estimatid_pose messages /estimatid_pose(geometry_msgs/Pose)
 - estimatid_path messages /estimatid_path(nav_msgs/Path)
 
+# Software architecture
+![eskf_localization_2](https://user-images.githubusercontent.com/52307432/188323033-96053739-06f5-4128-8085-68c08dbc4b76.jpg)
+
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
 
