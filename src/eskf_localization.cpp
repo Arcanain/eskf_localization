@@ -1,27 +1,24 @@
 #include <ros/ros.h>
-#include <iostream>
 
-#include "eskf.h"
 #include "ros_interface.h"
 
 int main(int argc, char**argv)
 {
     ros::init(argc, argv, "eskf_localization");
-	ros::NodeHandle nh;
+    ros::NodeHandle n;
 
-	ESKF eskf;
+    // gazebo simulator
+    /*double lat0 = 49.89999999967053;
+    double lon0 = 8.899999999175634;*/
+	
+    // utbm_robocar_dataset_20190131_noimage.bag
+    double lat0 = 47.5115140833;
+    double lon0 = 6.79310693333;
 
-    //ros::Rate loop_rate(50);
+    ROS_Interface ros_interface(n, lat0, lon0);
+
 	while(ros::ok()){
-		ros::spinOnce();
-		/*
-		eskf.Init();
-		eskf.Predict();
-		eskf.Correct();
-		eskf.State_update();
-		eskf.Error_State_Reset();
-		*/
-		//loop_rate.sleep();
+        ros::spinOnce();
 	}
 
     return 0;
