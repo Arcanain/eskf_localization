@@ -77,6 +77,14 @@ cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 roslaunch gnss_imu_odom_ESKF gps_trajectory_plotter.launch 
 ```
-
+### result in rviz
 ![Screenshot at 2022-09-04 19-30-24](https://user-images.githubusercontent.com/52307432/188315228-ccd0601e-685d-416e-8459-928097209381.png)
 
+# eskf_localization
+```
+cd catkin_ws/
+source ~/catkin_ws/devel/setup.bash
+roslaunch gnss_imu_odom_ESKF eskf_localization.launch 
+```
+### result in rviz
+![Screenshot at 2022-09-04 23-22-30](https://user-images.githubusercontent.com/52307432/188319301-f849a459-7d64-40b3-9e6a-396494ae1cc7.png)
