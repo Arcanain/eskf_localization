@@ -25,6 +25,10 @@ source ~/catkin_ws/devel/setup.bash
 
 https://epan-utbm.github.io/utbm_robocar_dataset/
 
+utbm_robocar_dataset_20190131_noimage.bag (1.5 GB) 
+
+2019-01-31 (Fri, snow) 	08:54-09:10 (15'59") 	1 × Velodyne / ibeo / SICK / IMU / GPS / Bumblebee XB3 / fisheye
+
 ## STEP4 rosbag play
 ### Terminal1
 ```
