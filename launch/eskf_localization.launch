@@ -1,4 +1,5 @@
 <launch>
     <!--<node pkg="gnss_imu_odom_ESKF" name="eskf_localization" type="eskf_localization" output="screen"/>-->
+    <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver" output="screen"/>
     <node pkg="gnss_imu_odom_ESKF" name="test_eskf_localization" type="test_eskf_localization" output="screen"/>
 </launch>

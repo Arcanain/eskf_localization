@@ -33,6 +33,9 @@ target_link_libraries(eskf_localization ${catkin_LIBRARIES})
 add_executable(test_eskf_localization src/test_eskf_localization.cpp)
 target_link_libraries(test_eskf_localization ${catkin_LIBRARIES})
 
+add_executable(gps_trajectory_plotter src/gps_trajectory_plotter.cpp)
+target_link_libraries(gps_trajectory_plotter ${catkin_LIBRARIES})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/gnss_imu_odom_ESKF.cpp

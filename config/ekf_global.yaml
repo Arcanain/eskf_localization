@@ -1,0 +1,40 @@
+odom_frame: odom
+base_link_frame: base_link
+world_frame: map
+map_frame: map
+
+two_d_mode: true
+
+frequency: 50
+
+odom0: odometry/gps
+odom0_config: [true,  true,  false,   # x,   y,   z
+               false, false, false,   # r,   p,   w (yaw)
+               false, false, false,   # dx,  dy,  dz
+               false, false, false,   # dr,  dp,  dw
+               false, false, false]   # ddx, ddy, ddz
+odom0_differential: false
+odom0_nodelay: true
+odom0_queue_size: 10
+
+odom1: /odom
+odom1_config: [false, false, false,   # x,   y,   z
+               false, false, false,   # r,   p,   w (yaw)
+               true,  true,  true,    # dx,  dy,  dz
+               false, false, true,    # dr,  dp,  dw
+               false, false, false]   # ddx, ddy, ddz
+odom1_differential: false
+odom1_nodelay: true
+odom1_queue_size: 10
+
+# (note this is not raw IMU, but output from madgwick filter)
+imu0: imu/data
+imu0_config: [false, false, false,   # x,   y,   z
+              true,  true,  true,    # r,   p,   w (yaw)
+              false, false, false,   # dx,  dy,  dz
+              true,  true,  true,    # dr,  dp,  dw
+              true,  true,  true,]   # ddx, ddy, ddz
+imu0_differential: false
+imu0_queue_size: 10
+imu0_nodelay: true
+imu0_remove_gravitational_acceleration: true
