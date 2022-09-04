@@ -48,3 +48,11 @@ cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 rostopic echo /fix
 ```
+
+# gps_trajectory_plotter
+```
+cd catkin_ws/
+source ~/catkin_ws/devel/setup.bash
+roslaunch gnss_imu_odom_ESKF gps_trajectory_plotter.launch 
+```
+
