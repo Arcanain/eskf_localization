@@ -41,6 +41,7 @@ class ROS_Interface
         GPS_Data gps_data;
         map_projection_reference_s map_ref;
         
+        /*
         // gps reference latitude and longitute
         double ref_lati;
         double ref_long;
@@ -52,7 +53,7 @@ class ROS_Interface
         double kFirstEccentricitySquared = 6.69437999014 * 0.001;
         double kSecondEccentricitySquared = 6.73949674228 * 0.001;
         double kFlattening = 1 / 298.257223563;
-
+        */
         // ESKF
         ESKF eskf;
     public:
@@ -65,12 +66,15 @@ class ROS_Interface
         void data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data);
         void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
 
+        // gps pose calcurate 
+        // convert from (Lat,Long,Alt) to (North,East,Down)
         int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         bool map_projection_initialized(const struct map_projection_reference_s *ref);
         int map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y);
         double constrain(double val, double min, double max);
 
+        /*
         // wgsconversion
         bool lla2enu(double enu[3], const double lla[3], const double ref_lla[3]);
         bool lla2xyz(double xyz[3], const double lla[3]);
@@ -94,6 +98,7 @@ class ROS_Interface
         void geodetic2Ecef(const double latitude, const double longitude, const double altitude, double* x, double* y, double* z);
         Eigen::Matrix3d nRe(const double lat_radians, const double lon_radians);
         void ecef2Ned(const double x, const double y, const double z, double* north, double* east, double* down);
+        */
 };
 
 /***********************************************************************
@@ -143,6 +148,9 @@ ROS_Interface::~ROS_Interface()
     cout << "ROS_Interface Finish" << endl;
 }
 
+/***********************************************************************
+ * Callback function(imu, gps)
+ **********************************************************************/
 void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 {
     //cout << "IMU callback" << endl;
@@ -165,41 +173,6 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
         return;
     }
 
-    /*
-    if(!init){
-        ref_lati = gps_msg->latitude;
-        ref_long = gps_msg->longitude;
-        ref_alti = gps_msg->altitude;
-        // Compute ECEF of NED origin
-        geodetic2Ecef(ref_lati, ref_long, ref_alti, &initial_ecef_x, &initial_ecef_y, &initial_ecef_z);
-        // Compute ECEF to NED and NED to ECEF matrices
-        double phiP = atan2(initial_ecef_z, sqrt(pow(initial_ecef_x, 2) + pow(initial_ecef_y, 2)));
-        ecef_to_ned_matrix = nRe(phiP, ref_long);
-        cout << initial_ecef_x << endl;
-        cout << initial_ecef_y << endl;
-        cout << initial_ecef_z << endl;
-        cout << ecef_to_ned_matrix << endl;
-
-        ecef2Ned(initial_ecef_x, initial_ecef_y, initial_ecef_z, &north, &east, &down);
-        cout << north << endl;
-        cout << east << endl;
-        cout << down << endl;
-
-        gps_data.timestamp = gps_msg->header.stamp.toSec();
-        gps_data.lla = Eigen::Vector3d(gps_msg->latitude,
-                                       gps_msg->longitude,
-                                       gps_msg->altitude);
-        gps_data.ned = Eigen::Vector3d(north,
-                                       east,
-                                       down);
-        eskf.Init(gps_data, x);
-        init = true;
-
-        return;
-    }
-
-    data_conversion_gps(gps_msg, gps_data);
-    */
     eskf.Correct(gps_data, x);
     eskf.State_update(x);
     eskf.Error_State_Reset(x);
@@ -264,34 +237,19 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
     map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
     gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
 
-    /*gps_data.timestamp = gps_msg->header.stamp.toSec();
-
-    gps_data.lla = Eigen::Vector3d(gps_msg->latitude,
-                                   gps_msg->longitude,
-                                   gps_msg->altitude);
-
-    float x, y;
-    map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
-    gps_data.ned << x, y, -gps_msg->altitude;*/
-
-    
-    // transform gps latitude and longitude coordinate to position in enu frame
+    /* transform gps latitude and longitude coordinate to position in enu frame(Compute ECEF of NED origin)
     double enu[3];
-    //double lla[3] = {gps_data.lla[0], gps_data.lla[1], gps_data.lla[2]};
     double lla[3] = {gps_msg->latitude, gps_msg->longitude, gps_msg->altitude};
     double ref[3] = {ref_lati, ref_long, ref_alti};
     lla2enu(enu, lla, ref);
 
-
-    // Compute ECEF of NED origin
     double ecef_x;
     double ecef_y;
     double ecef_z;
     geodetic2Ecef(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude, &ecef_x, &ecef_y, &ecef_z);
     ecef2Ned(ecef_x, ecef_y, ecef_z, &north, &east, &down);
+    gps_data.ned = Eigen::Vector3d(north,east,down);
     
-    //gps_data.ned = Eigen::Vector3d(north,east,down);
-
     nav_msgs::Odometry nav_odom;
     nav_odom.header.stamp = ros::Time::now();
     nav_odom.pose.pose.position.x = gps_msg->latitude;
@@ -303,8 +261,12 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
     nav_odom.pose.pose.orientation.w = 1.0f;
 
     nav_odom_pub.publish(nav_odom);
+    */
 }
 
+/***********************************************************************
+ * convert from (Lat,Long,Alt) to (North,East,Down)
+ **********************************************************************/
 int ROS_Interface::map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0)
 {
 	return map_projection_init_timestamped(ref, lat_0, lon_0);
@@ -312,15 +274,10 @@ int ROS_Interface::map_projection_init(struct map_projection_reference_s *ref, d
 
 int ROS_Interface::map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0)
 {
-
-	//ref->lat_rad = radians(lat_0);
-	//ref->lon_rad = radians(lon_0);
     ref->lat_rad = lat_0 * (M_PI / 180.0);
 	ref->lon_rad = lon_0 * (M_PI / 180.0);
 	ref->sin_lat = sin(ref->lat_rad);
 	ref->cos_lat = cos(ref->lat_rad);
-
-	// ref->timestamp = timestamp;
 	ref->init_done = true;
 
 	return 0;
@@ -338,10 +295,7 @@ int ROS_Interface::map_projection_project(const struct map_projection_reference_
 	if (!map_projection_initialized(ref)) {
 		return -1;
 	}
-    /*
-	const double lat_rad = radians(lat);
-	const double lon_rad = radians(lon);
-    */
+
     const double lat_rad = lat * (M_PI / 180.0);
 	const double lon_rad = lon * (M_PI / 180.0);
 
@@ -367,17 +321,16 @@ int ROS_Interface::map_projection_project(const struct map_projection_reference_
 
 double ROS_Interface::constrain(double val, double min, double max)
 {
-    if(val > max){
+    if (val > max) {
         return max;
-    }
-    else if(val < min){
+    } else if (val < min) {
         return min;
-    }
-    else
+    } else {
         return val;
+    }
 }
 
-
+/*
 //------------------------------------------------------------------------------------------------
 // WgsConversions::lla2enu [Public]  --- convert from (Lat,Long,Alt) to (East,North,Up)
 //------------------------------------------------------------------------------------------------
@@ -588,6 +541,6 @@ void ROS_Interface::ecef2Ned(const double x, const double y, const double z, dou
     *east = ret(1);
     *down = -ret(2);
 }
-
+*/
 
 #endif // ROS_INTERFACE
