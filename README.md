@@ -87,4 +87,7 @@ source ~/catkin_ws/devel/setup.bash
 roslaunch gnss_imu_odom_ESKF eskf_localization.launch 
 ```
 ### result in rviz
+- the green path is made by raw GPS
+- the blue path is made by ESKF
+
 ![Screenshot at 2022-09-04 23-22-30](https://user-images.githubusercontent.com/52307432/188319301-f849a459-7d64-40b3-9e6a-396494ae1cc7.png)
