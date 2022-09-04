@@ -1,5 +1,8 @@
 # gnss_imu_odom_ESKF
-gnss imu odometry fusion localization by ESKF(output NED pose)  
+gnss imu odometry sensor fusion localization by ESKF(output NED pose)  
+
+- [x] gnss imu sensor fusion localization by ESKF  
+- [ ] gnss imu odometry sensor fusion localization by ESKF  
 
 # Environment
 OS : Ubuntu MATE with Raspberry pi4(8GB)  
