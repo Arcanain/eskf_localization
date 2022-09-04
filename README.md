@@ -38,11 +38,13 @@ rosbag play --clock Downloads/utbm_robocar_dataset_20180719_noimage.bag
 ```
 ### Terminal3
 ```
+cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 rostopic echo /nmea_sentence
 ```
 ### Terminal4
 ```
+cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 rostopic echo /fix
 ```
