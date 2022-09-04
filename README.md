@@ -1,5 +1,23 @@
 # gnss_imu_odom_ESKF
-gnss_imu_odom_ESKF
+gnss imu odometry sensor fusion localization by ESKF(output NED pose)  
+
+- [x] gnss imu sensor fusion localization by ESKF  
+- [ ] gnss imu odometry sensor fusion localization by ESKF  
+
+# Environment
+OS : Ubuntu MATE with Raspberry pi4(8GB)  
+ROS : noetic
+
+# Input Output(IO)
+## Input
+- nmea messages /nmea_sentence(nmea_msgs/Sentence)
+- gps messages /fix(sensor_msgs/NavSatFix)
+- imu messages /imu/data(sensor_msgs/Imu)
+- odom messages /odom(geometry_msgs/Pose)
+
+## Output
+- estimatid_pose messages /estimatid_pose(geometry_msgs/Pose)
+- estimatid_path messages /estimatid_path(nav_msgs/Path)
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
@@ -59,6 +77,17 @@ cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 roslaunch gnss_imu_odom_ESKF gps_trajectory_plotter.launch 
 ```
-
+### result in rviz
 ![Screenshot at 2022-09-04 19-30-24](https://user-images.githubusercontent.com/52307432/188315228-ccd0601e-685d-416e-8459-928097209381.png)
 
+# eskf_localization
+```
+cd catkin_ws/
+source ~/catkin_ws/devel/setup.bash
+roslaunch gnss_imu_odom_ESKF eskf_localization.launch 
+```
+### result in rviz
+- the green path is made by raw GPS
+- the blue path is made by ESKF
+
+![Screenshot at 2022-09-04 23-22-30](https://user-images.githubusercontent.com/52307432/188319301-f849a459-7d64-40b3-9e6a-396494ae1cc7.png)
