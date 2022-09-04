@@ -21,3 +21,6 @@ catkin_make
 source ~/catkin_ws/devel/setup.bash
 ```
 
+## STEP3 Install rosbag file
+
+https://epan-utbm.github.io/utbm_robocar_dataset/
