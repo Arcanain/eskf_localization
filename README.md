@@ -7,8 +7,9 @@ gnss_imu_odom_ESKF
 ```
 cd catkin_ws/
 cd src/
-git clone 
-
+git clone https://github.com/ros-drivers/nmea_msgs
+catkin_make
+source ~/catkin_ws/devel/setup.bash
 ```
 
 
