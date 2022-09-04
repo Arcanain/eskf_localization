@@ -10,8 +10,9 @@ ROS : noetic
 
 # Input Output(IO)
 ## Input
-- gps messages /fix()
-- imu messages /imu/data()
+- nmea messages /nmea_sentence(nmea_msgs/Sentence)
+- gps messages /fix(sensor_msgs/NavSatFix)
+- imu messages /imu/data(sensor_msgs/Imu)
 - odom messages /odom()
 
 ## Output
