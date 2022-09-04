@@ -11,5 +11,13 @@ git clone https://github.com/ros-drivers/nmea_msgs
 catkin_make
 source ~/catkin_ws/devel/setup.bash
 ```
+## STEP2 Install nmea_navsat_driver
 
+```
+cd catkin_ws/
+cd src/
+git clone https://github.com/ros-drivers/nmea_navsat_driver
+catkin_make
+source ~/catkin_ws/devel/setup.bash
+```
 
