@@ -81,6 +81,7 @@ roslaunch gnss_imu_odom_ESKF gps_trajectory_plotter.launch
 ![Screenshot at 2022-09-04 19-30-24](https://user-images.githubusercontent.com/52307432/188315228-ccd0601e-685d-416e-8459-928097209381.png)
 
 # eskf_localization
+- [x] gnss imu sensor fusion localization by ESKF  
 ```
 cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
