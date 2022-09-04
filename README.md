@@ -13,11 +13,11 @@ ROS : noetic
 - nmea messages /nmea_sentence(nmea_msgs/Sentence)
 - gps messages /fix(sensor_msgs/NavSatFix)
 - imu messages /imu/data(sensor_msgs/Imu)
-- odom messages /odom()
+- odom messages /odom(geometry_msgs/Pose)
 
 ## Output
-- estimatid_pose messages /estimatid_pose()
-- estimatid_path messages /estimatid_path()
+- estimatid_pose messages /estimatid_pose(geometry_msgs/Pose)
+- estimatid_path messages /estimatid_path(nav_msgs/Path)
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
