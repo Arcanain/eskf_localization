@@ -16,11 +16,15 @@ class GPS_Trajectory_Plotter
 {
     private:
         ros::NodeHandle nh;
+
+        // publisher subscriber
+        ros::Publisher gps_pose_pub;
         ros::Publisher gps_path_pub;
         ros::Subscriber gps_sub;
-
-        nav_msgs::Path gps_path;
+        
+        // gps variable
         GPS_Data gps_data;
+        nav_msgs::Path gps_path;
         map_projection_reference_s map_ref;
 
         // for utbm_robocar_dataset_20190131_noimage.bag
@@ -28,10 +32,13 @@ class GPS_Trajectory_Plotter
         double lat0 = 47.5115140833;
         double lon0 = 6.79310693333;
     public:
+        // init
         GPS_Trajectory_Plotter();
         ~GPS_Trajectory_Plotter();
+
         // gps callback
         void gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg);
+
         // gps pose calcurate
         int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
@@ -45,6 +52,7 @@ GPS_Trajectory_Plotter::GPS_Trajectory_Plotter()
 {
     std::cout << "Start GPS Trajectory Plotter!" << std::endl;
 
+    gps_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/gps_pose", 10);
     gps_path_pub = nh.advertise<nav_msgs::Path>("/gps_path", 10);
     gps_sub = nh.subscribe("/fix", 10, &GPS_Trajectory_Plotter::gps_callback, this);
 
@@ -75,6 +83,7 @@ void GPS_Trajectory_Plotter::gps_callback(const sensor_msgs::NavSatFixConstPtr& 
     point.pose.orientation.y = 0;
     point.pose.orientation.z = 0;
     gps_path.poses.push_back(point);
+    gps_pose_pub.publish(point);
     gps_path_pub.publish(gps_path);
 }
 
@@ -132,14 +141,13 @@ int GPS_Trajectory_Plotter::map_projection_project(const struct map_projection_r
 
 double GPS_Trajectory_Plotter::constrain(double val, double min, double max)
 {
-    if(val > max){
+    if (val > max) {
         return max;
-    }
-    else if(val < min){
+    } else if (val < min) {
         return min;
-    }
-    else
+    } else {
         return val;
+    }
 }
 
 void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data)
@@ -150,7 +158,6 @@ void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixCon
 
     float x, y;
     map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
-    //gps_data.ned << x, y, -gps_msg->altitude;
     gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
 }
 
