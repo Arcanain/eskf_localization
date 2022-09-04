@@ -32,12 +32,16 @@ cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
 roslaunch gnss_imu_odom_ESKF eskf_localization.launch
 ```
-### Terminal2
+### Terminal 2
+```
+rosbag play --clock Downloads/utbm_robocar_dataset_20180719_noimage.bag
+```
+### Terminal3
 ```
 source ~/catkin_ws/devel/setup.bash
 rostopic echo /nmea_sentence
 ```
-### Terminal3
+### Terminal4
 ```
 source ~/catkin_ws/devel/setup.bash
 rostopic echo /fix
