@@ -24,3 +24,21 @@ source ~/catkin_ws/devel/setup.bash
 ## STEP3 Install rosbag file
 
 https://epan-utbm.github.io/utbm_robocar_dataset/
+
+## STEP4 rosbag play
+### Terminal1
+```
+cd catkin_ws/
+source ~/catkin_ws/devel/setup.bash
+roslaunch gnss_imu_odom_ESKF eskf_localization.launch
+```
+### Terminal2
+```
+source ~/catkin_ws/devel/setup.bash
+rostopic echo /nmea_sentence
+```
+### Terminal3
+```
+source ~/catkin_ws/devel/setup.bash
+rostopic echo /fix
+```
