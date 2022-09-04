@@ -31,15 +31,10 @@ class ESKF
         ESKF();
         ~ESKF();
         void Init(const GPS_Data& gps_data, State& x);
-        //void Init();
         void Predict(const IMU_Data& imu_data, State& x);
-        //void Predict();
         void Correct(const GPS_Data& gps_data, State& x);
-        //void Correct();
         void State_update(State& x);
-        //void State_update();
         void Error_State_Reset(State& x);
-        //void Error_State_Reset();
 
         // Quaternion
         Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
@@ -70,13 +65,7 @@ ESKF::~ESKF()
 }
 
 void ESKF::Init(const GPS_Data& gps_data, State& x)
-//void ESKF::Init()
 {
-    /*************/
-    /* test code */
-    /*************/
-    //State x;
-
     x.timestamp = gps_data.timestamp;
     x.position  = gps_data.ned;
 
@@ -108,49 +97,29 @@ void ESKF::Init(const GPS_Data& gps_data, State& x)
 */
 
 void ESKF::Predict(const IMU_Data& imu_data, State& x)
-//void ESKF::Predict()
 {
-    /*************/
-    /* test code */
-    /*************/
-    //State x;
-    //IMU_Data imu_data;
-
     const double dt = imu_data.timestamp - x.timestamp;
     x.timestamp = imu_data.timestamp;
 
     Eigen::Matrix3d R = x.quaternion.toRotationMatrix();
-    //cout << R << endl;
     
     // state update //
     x.position = x.position + x.velocity * dt + 0.5 * (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt * dt;
     x.velocity = x.velocity + (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt;
     x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
 
-    /*
-    Eigen::Quaterniond quat_wdt = Eigen::Quaterniond(
-    Eigen::AngleAxisd((imu_data.gyro(0) - x.gyro_bias(0)) * dt, Eigen::Vector3d::UnitX()) *
-    Eigen::AngleAxisd((imu_data.gyro(1) - x.gyro_bias(1)) * dt, Eigen::Vector3d::UnitY()) *
-    Eigen::AngleAxisd((imu_data.gyro(2) - x.gyro_bias(2)) * dt, Eigen::Vector3d::UnitZ()));
-    x.quaternion = quat_wdt * x.quaternion;
-    */
-
     // calcurate Jacobian Fx
     Fx = calcurate_Jacobian_Fx(imu_data.acc, x.acc_bias, R, dt);
-    //cout << Fx << endl;
 
     // calcurate Jacobian Fi
     Fi = calcurate_Jacobian_Fi();
-    //cout << Fi << endl;
 
     // ccalcurate Jacobian Qi
     Qi = calcurate_Jacobian_Qi(dt);
-    //cout << Qi << endl;
 
     // calcurate PPred
     //x.PPred = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
     x.cov = Fx * x.cov * Fx.transpose() + Fi * Qi * Fi.transpose();
-    //cout << x.PPred << endl;
 }
 
 Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
@@ -202,29 +171,19 @@ Eigen::Matrix<double, 12, 12> ESKF::calcurate_Jacobian_Qi(const double dt)
 * P_k = (I - KH)*P_{k-1}
 */
 void ESKF::Correct(const GPS_Data& gps_data, State& x)
-//void ESKF::Correct()
 {
-    /*************/
-    /* test code */
-    /*************/
-    //State x;
-    //GPS_Data gps_data;
-
     Eigen::Vector3d Y(gps_data.ned[0], gps_data.ned[1], gps_data.ned[2]);
     Eigen::Vector3d X(x.position[0], x.position[1], x.position[2]);
     Eigen::Matrix3d V = pose_noise * Eigen::Matrix3d::Identity();
 
     // calcurate Jacobian H
     H = calcurate_Jacobian_H(x);
-    //cout << H << endl;
 
     //Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
     Eigen::MatrixXd K = x.cov * H.transpose() * (H * x.cov * H.transpose() + V).inverse();
     x.error = K * (Y - X);
-    //cout << x.error << endl;
     //x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
     x.cov = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.cov;
-    //cout << x.PEst << endl;
 }
 
 Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
@@ -250,13 +209,7 @@ Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
  * State Update
  **********************************************************************/
 void ESKF::State_update(State& x)
-//void ESKF::State_update()
 {
-    /*************/
-    /* test code */
-    /*************/
-    //State x;
-
     Eigen::Vector3d error_pos = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(0, 0).transpose().data());
     Eigen::Vector3d error_vel = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(3, 0).transpose().data());
     Eigen::Vector3d error_ori = Eigen::Map<Eigen::Vector3d>(x.error.block<3, 1>(6, 0).transpose().data());
@@ -275,15 +228,8 @@ void ESKF::State_update(State& x)
 }
 
 void ESKF::Error_State_Reset(State& x)
-//void ESKF::Error_State_Reset()
 {
-    /*************/
-    /* test code */
-    /*************/
-    //State x;
-
     x.error.setZero();
-    //cout << x.error << endl;
 }
 
 /***********************************************************************

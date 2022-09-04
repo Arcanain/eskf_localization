@@ -138,6 +138,7 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     //x.gravity = Eigen::Vector3d(0., 0., -9.81007); // enu frame
     x.PPred = Eigen::Matrix<double, 18, 18>::Zero();
     x.PEst = Eigen::Matrix<double, 18, 18>::Zero();
+    x.cov = Eigen::Matrix<double, 18, 18>::Zero();
     x.error = Eigen::Matrix<double, 18, 1>::Zero();
 
     map_projection_init(&map_ref, lat, lon);
@@ -153,7 +154,6 @@ ROS_Interface::~ROS_Interface()
  **********************************************************************/
 void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 {
-    //cout << "IMU callback" << endl;
     data_conversion_imu(imu_msg, imu_data);
 
     if (!init) {
