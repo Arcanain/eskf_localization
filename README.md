@@ -8,6 +8,16 @@ gnss imu odometry sensor fusion localization by ESKF(output NED pose)
 OS : Ubuntu MATE with Raspberry pi4(8GB)  
 ROS : noetic
 
+# Input Output(IO)
+## Input
+- gps messages /fix()
+- imu messages /imu/data()
+- odom messages /odom()
+
+## Output
+- estimatid_pose messages /estimatid_pose()
+- estimatid_path messages /estimatid_path()
+
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
 
