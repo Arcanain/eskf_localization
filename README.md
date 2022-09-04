@@ -1,5 +1,9 @@
 # gnss_imu_odom_ESKF
-gnss imu odometry fusion localization by ESKF  
+gnss imu odometry fusion localization by ESKF(output NED pose)  
+
+# Environment
+OS : Ubuntu MATE with Raspberry pi4(8GB)  
+ROS : noetic
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
