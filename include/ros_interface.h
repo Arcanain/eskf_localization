@@ -126,7 +126,7 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
 
     x.position = Eigen::Vector3d::Zero();
     x.velocity = Eigen::Vector3d::Zero();
-    x.quaternion = Eigen::Quaterniond(0., 0., 0., 0.);
+    x.quaternion = Eigen::Quaterniond(0.0, 0.0, 0.0, 0.0);
     x.acc_bias = Eigen::Vector3d::Zero();
     x.gyro_bias = Eigen::Vector3d::Zero();
     x.gravity = Eigen::Vector3d(0., 0., 9.81007); // ned frame
@@ -136,10 +136,6 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     x.error = Eigen::Matrix<double, 18, 1>::Zero();
 
     map_projection_init(&map_ref, lat, lon);
-    /*
-    cout << map_ref.lat_rad << endl;
-    cout << map_ref.lon_rad << endl;
-    */
 }
 
 ROS_Interface::~ROS_Interface()
@@ -161,10 +157,7 @@ void ROS_Interface::imu_callback(const sensor_msgs::ImuConstPtr& imu_msg)
 
 void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
 {
-    //cout << "GPS callback" << endl;
     data_conversion_gps(gps_msg, gps_data);
-    //cout << gps_data.ned[0] << endl;
-    //cout << gps_data.ned[1] << endl;
 
     if(!init){
         eskf.Init(gps_data, x);
@@ -226,7 +219,7 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
 
     estimated_pose.position.x = x.position[0];
     estimated_pose.position.y = x.position[1];
-    estimated_pose.position.z = 0.0;
+    estimated_pose.position.z = x.position[2];
     estimated_pose.orientation.w = x.quaternion.w();
     estimated_pose.orientation.x = x.quaternion.x();
     estimated_pose.orientation.y = x.quaternion.y();
@@ -265,27 +258,29 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
 {
     gps_data.timestamp = gps_msg->header.stamp.toSec();
 
+    gps_data.lla = Eigen::Vector3d(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude);
+
+    float x, y;
+    map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
+    gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
+
+    /*gps_data.timestamp = gps_msg->header.stamp.toSec();
+
     gps_data.lla = Eigen::Vector3d(gps_msg->latitude,
                                    gps_msg->longitude,
                                    gps_msg->altitude);
 
     float x, y;
     map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
-    gps_data.ned << x, y, -gps_msg->altitude;
+    gps_data.ned << x, y, -gps_msg->altitude;*/
 
-
+    
     // transform gps latitude and longitude coordinate to position in enu frame
     double enu[3];
     //double lla[3] = {gps_data.lla[0], gps_data.lla[1], gps_data.lla[2]};
     double lla[3] = {gps_msg->latitude, gps_msg->longitude, gps_msg->altitude};
     double ref[3] = {ref_lati, ref_long, ref_alti};
-
-    //cout << ref[0] << endl;
     lla2enu(enu, lla, ref);
-    //cout << enu[0] << endl;
-    //gps_data.ned << enu[0], enu[1], gps_msg->altitude;
-    //cout << "gps: " << enu[0] << " " << enu[1] << " " << enu[2] << endl;
-
 
 
     // Compute ECEF of NED origin
@@ -293,22 +288,8 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
     double ecef_y;
     double ecef_z;
     geodetic2Ecef(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude, &ecef_x, &ecef_y, &ecef_z);
-    /*cout << ecef_x << endl;
-    cout << ecef_y << endl;
-    cout << ecef_z << endl;*/
     ecef2Ned(ecef_x, ecef_y, ecef_z, &north, &east, &down);
-    /*cout << north << endl;
-    cout << east << endl;
-    cout << down << endl;*/
-    //cout << north << endl;
-    //cout << north * 1000000.0  << endl;
     
-    //cout << north * 1000000.0  << endl;
-    //cout << east * 1000000.0  << endl;
-    /*gps_data.ned = Eigen::Vector3d(north * 1000000.0,
-                                   east * 100000.0,
-                                   down);*/
-
     //gps_data.ned = Eigen::Vector3d(north,east,down);
 
     nav_msgs::Odometry nav_odom;

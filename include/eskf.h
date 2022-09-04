@@ -26,9 +26,7 @@ class ESKF
 
         // Correct
         double pose_noise = 1.2;
-
         Eigen::Matrix<double, 3, 18> H;
-
     public:
         ESKF();
         ~ESKF();
@@ -88,6 +86,9 @@ void ESKF::Init(const GPS_Data& gps_data, State& x)
     x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
+    x.cov.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
+    x.cov.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
+    x.cov.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
 }
 
 // https://qiita.com/rsasaki0109/items/e969ad632cf321e25a6a
@@ -147,7 +148,8 @@ void ESKF::Predict(const IMU_Data& imu_data, State& x)
     //cout << Qi << endl;
 
     // calcurate PPred
-    x.PPred = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
+    //x.PPred = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
+    x.cov = Fx * x.cov * Fx.transpose() + Fi * Qi * Fi.transpose();
     //cout << x.PPred << endl;
 }
 
@@ -216,10 +218,12 @@ void ESKF::Correct(const GPS_Data& gps_data, State& x)
     H = calcurate_Jacobian_H(x);
     //cout << H << endl;
 
-    Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
+    //Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
+    Eigen::MatrixXd K = x.cov * H.transpose() * (H * x.cov * H.transpose() + V).inverse();
     x.error = K * (Y - X);
     //cout << x.error << endl;
-    x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
+    //x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
+    x.cov = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.cov;
     //cout << x.PEst << endl;
 }
 
