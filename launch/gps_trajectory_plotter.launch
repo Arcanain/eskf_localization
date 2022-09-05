@@ -1,4 +1,6 @@
 <launch>
+    <!-- tf satic -->
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
     <!--/nmea_sentence(nmea_msgs/Sentence) convert to  /fix(sensor_msgs/NavSatFix)-->
     <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver" output="screen"/>
     <!--/fix(sensor_msgs/NavSatFix) convert to /gps_path(nav_msgs/Path)-->

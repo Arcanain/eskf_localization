@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cmath>
 #include "ros/ros.h"
+#include "tf/tf.h"
+#include "tf/transform_broadcaster.h"
 #include "nav_msgs/Path.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/NavSatFix.h"
@@ -32,10 +34,18 @@ class ROS_Interface
         ros::Subscriber gps_sub;
         ros::Subscriber imu_sub;
 
+        /*
+        // tf publish
+        tf::TransformBroadcaster odom_to_baselink_broadcaster;
+        geometry_msgs::TransformStamped odom_to_baselink_trans;
+        */
+       
+        // publish data
         nav_msgs::Path gps_path;
         nav_msgs::Path estimated_path;
         geometry_msgs::Pose estimated_pose;
 
+        // ESKF variable
         State x;
         IMU_Data imu_data;
         GPS_Data gps_data;
@@ -66,8 +76,7 @@ class ROS_Interface
         void data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data);
         void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
 
-        // gps pose calcurate 
-        // convert from (Lat,Long,Alt) to (North,East,Down)
+        // gps pose calcurate{convert from (Lat,Long,Alt) to (North,East,Down)}
         int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
         bool map_projection_initialized(const struct map_projection_reference_s *ref);
@@ -177,6 +186,7 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     eskf.State_update(x);
     eskf.Error_State_Reset(x);
 
+    // publish gps_path
     geometry_msgs::PoseStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
@@ -190,6 +200,7 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     gps_path.poses.push_back(point);
     gps_path_pub.publish(gps_path);
 
+    // publish estimated_pose
     estimated_pose.position.x = x.position[0];
     estimated_pose.position.y = x.position[1];
     estimated_pose.position.z = x.position[2];
@@ -199,6 +210,7 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     estimated_pose.orientation.z = x.quaternion.z();
     estimated_pub.publish(estimated_pose);
 
+    // publish estimated_path
     geometry_msgs::PoseStamped estimated_point;
     estimated_point.header.frame_id = "map";
     estimated_point.header.stamp = ros::Time::now();
@@ -212,6 +224,23 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
 
     estimated_path.poses.push_back(estimated_point);
     estimated_path_pub.publish(estimated_path);
+
+    /*
+    // /odom to /base_link transform broadcast
+    odom_to_baselink_trans.header.stamp = ros::Time::now();
+    odom_to_baselink_trans.header.frame_id = "odom";
+    odom_to_baselink_trans.child_frame_id = "navsat";
+    odom_to_baselink_trans.transform.translation.x = x.position[0];
+    odom_to_baselink_trans.transform.translation.y = x.position[1];
+    odom_to_baselink_trans.transform.translation.z = 0.0;
+    //Eigen::Vector4d quad_vec = Eigen::Vector4d(x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z());
+    //constexpr std::complex<double> quad_vec{x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()};
+    odom_to_baselink_trans.transform.rotation.w = x.quaternion.w() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
+    odom_to_baselink_trans.transform.rotation.x = x.quaternion.x() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
+    odom_to_baselink_trans.transform.rotation.y = x.quaternion.y() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
+    odom_to_baselink_trans.transform.rotation.z = x.quaternion.z() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
+    odom_to_baselink_broadcaster.sendTransform(odom_to_baselink_trans);
+    */
 }   
 
 void ROS_Interface::data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data)
