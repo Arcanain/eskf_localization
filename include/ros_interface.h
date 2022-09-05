@@ -27,23 +27,21 @@ class ROS_Interface
         // Publisher
         ros::Publisher gps_path_pub;
         ros::Publisher estimated_path_pub;
-        ros::Publisher estimated_pub;
+        ros::Publisher estimated_pose_pub;
         ros::Publisher nav_odom_pub;
 
         // Subscriber
         ros::Subscriber gps_sub;
         ros::Subscriber imu_sub;
-
-        /*
+        
         // tf publish
         tf::TransformBroadcaster odom_to_baselink_broadcaster;
         geometry_msgs::TransformStamped odom_to_baselink_trans;
-        */
-       
+        
         // publish data
         nav_msgs::Path gps_path;
         nav_msgs::Path estimated_path;
-        geometry_msgs::Pose estimated_pose;
+        nav_msgs::Odometry estimated_pose;
 
         // ESKF variable
         State x;
@@ -122,7 +120,7 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     // Publisher
     gps_path_pub = nh.advertise<nav_msgs::Path>("/gps_path", 10);
     estimated_path_pub = nh.advertise<nav_msgs::Path>("/estimated_path", 10);
-    estimated_pub = nh.advertise<geometry_msgs::Pose>("/estimated_pose", 10);
+    estimated_pose_pub = nh.advertise<nav_msgs::Odometry>("/estimated_pose", 10);
     nav_odom_pub = nh.advertise<nav_msgs::Odometry>("/nav_odom", 10);
 
     // Subscriber for gazebo simulator
@@ -137,6 +135,10 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     estimated_path.header.frame_id = "map";
     estimated_path.header.stamp = ros::Time::now();
     estimated_path.header.seq = 0;
+
+    estimated_pose.header.frame_id = "map";
+    estimated_pose.child_frame_id = "base_link";
+    estimated_pose.header.stamp = ros::Time::now();
 
     x.position = Eigen::Vector3d::Zero();
     x.velocity = Eigen::Vector3d::Zero();
@@ -201,14 +203,27 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     gps_path_pub.publish(gps_path);
 
     // publish estimated_pose
-    estimated_pose.position.x = x.position[0];
-    estimated_pose.position.y = x.position[1];
-    estimated_pose.position.z = x.position[2];
-    estimated_pose.orientation.w = x.quaternion.w();
-    estimated_pose.orientation.x = x.quaternion.x();
-    estimated_pose.orientation.y = x.quaternion.y();
-    estimated_pose.orientation.z = x.quaternion.z();
-    estimated_pub.publish(estimated_pose);
+    estimated_pose.pose.pose.position.x = x.position[0];
+    estimated_pose.pose.pose.position.y = x.position[1];
+    estimated_pose.pose.pose.position.z = 0.0;
+    estimated_pose.pose.pose.orientation.w = x.quaternion.w();
+    estimated_pose.pose.pose.orientation.x = x.quaternion.x();
+    estimated_pose.pose.pose.orientation.y = x.quaternion.y();
+    estimated_pose.pose.pose.orientation.z = x.quaternion.z();
+    estimated_pose_pub.publish(estimated_pose);
+
+    // /odom to /base_link transform broadcast
+    odom_to_baselink_trans.header.stamp = ros::Time::now();
+    odom_to_baselink_trans.header.frame_id = "odom";
+    odom_to_baselink_trans.child_frame_id = "base_link";
+    odom_to_baselink_trans.transform.translation.x = x.position[0];
+    odom_to_baselink_trans.transform.translation.y = x.position[1];
+    odom_to_baselink_trans.transform.translation.z = 0.0;
+    odom_to_baselink_trans.transform.rotation.w = 1.0;
+    odom_to_baselink_trans.transform.rotation.x = 0.0;
+    odom_to_baselink_trans.transform.rotation.y = 0.0;
+    odom_to_baselink_trans.transform.rotation.z = 0.0;
+    odom_to_baselink_broadcaster.sendTransform(odom_to_baselink_trans);
 
     // publish estimated_path
     geometry_msgs::PoseStamped estimated_point;
@@ -224,23 +239,6 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
 
     estimated_path.poses.push_back(estimated_point);
     estimated_path_pub.publish(estimated_path);
-
-    /*
-    // /odom to /base_link transform broadcast
-    odom_to_baselink_trans.header.stamp = ros::Time::now();
-    odom_to_baselink_trans.header.frame_id = "odom";
-    odom_to_baselink_trans.child_frame_id = "navsat";
-    odom_to_baselink_trans.transform.translation.x = x.position[0];
-    odom_to_baselink_trans.transform.translation.y = x.position[1];
-    odom_to_baselink_trans.transform.translation.z = 0.0;
-    //Eigen::Vector4d quad_vec = Eigen::Vector4d(x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z());
-    //constexpr std::complex<double> quad_vec{x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()};
-    odom_to_baselink_trans.transform.rotation.w = x.quaternion.w() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
-    odom_to_baselink_trans.transform.rotation.x = x.quaternion.x() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
-    odom_to_baselink_trans.transform.rotation.y = x.quaternion.y() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
-    odom_to_baselink_trans.transform.rotation.z = x.quaternion.z() / norm((x.quaternion.w(), x.quaternion.x(), x.quaternion.y(), x.quaternion.z()));
-    odom_to_baselink_broadcaster.sendTransform(odom_to_baselink_trans);
-    */
 }   
 
 void ROS_Interface::data_conversion_imu(const sensor_msgs::ImuConstPtr& imu_msg, IMU_Data& imu_data)
