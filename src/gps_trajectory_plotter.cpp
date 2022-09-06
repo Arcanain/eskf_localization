@@ -9,6 +9,7 @@
 #include "geometry_msgs/Pose.h"
 
 #include "state_variable.h"
+#include "geography.h"
 
 using namespace std;
 
@@ -31,6 +32,9 @@ class GPS_Trajectory_Plotter
         // Init gps position(latitude, longitude)
         double lat0 = 47.5115140833;
         double lon0 = 6.79310693333;
+
+        // GEOGRAPHY Instance
+        GEOGRAPHY geography;
     public:
         // init
         GPS_Trajectory_Plotter();
@@ -40,11 +44,6 @@ class GPS_Trajectory_Plotter
         void gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg);
 
         // gps pose calcurate
-        int map_projection_init(struct map_projection_reference *ref, double lat_0, double lon_0);
-        int map_projection_init_timestamped(struct map_projection_reference *ref, double lat_0, double lon_0);
-        bool map_projection_initialized(const struct map_projection_reference *ref);
-        int map_projection_project(const struct map_projection_reference *ref, double lat, double lon, float *x, float *y);
-        double constrain(double val, double min, double max);
         void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
 };
 
@@ -60,7 +59,7 @@ GPS_Trajectory_Plotter::GPS_Trajectory_Plotter()
     gps_path.header.stamp = ros::Time::now();
     gps_path.header.seq = 0;
 
-    map_projection_init(&map_ref, lat0, lon0);
+    geography.map_projection_init(&map_ref, lat0, lon0);
 }
 
 GPS_Trajectory_Plotter::~GPS_Trajectory_Plotter()
@@ -87,69 +86,6 @@ void GPS_Trajectory_Plotter::gps_callback(const sensor_msgs::NavSatFixConstPtr& 
     gps_path_pub.publish(gps_path);
 }
 
-int GPS_Trajectory_Plotter::map_projection_init(struct map_projection_reference *ref, double lat_0, double lon_0)
-{
-	return map_projection_init_timestamped(ref, lat_0, lon_0);
-}
-
-int GPS_Trajectory_Plotter::map_projection_init_timestamped(struct map_projection_reference *ref, double lat_0, double lon_0)
-{
-    ref->lat_rad = lat_0 * (M_PI / 180.0);
-	ref->lon_rad = lon_0 * (M_PI / 180.0);
-	ref->sin_lat = sin(ref->lat_rad);
-	ref->cos_lat = cos(ref->lat_rad);
-	ref->init_done = true;
-
-	return 0;
-}
-
-bool GPS_Trajectory_Plotter::map_projection_initialized(const struct map_projection_reference *ref)
-{
-	return ref->init_done;
-}
-
-int GPS_Trajectory_Plotter::map_projection_project(const struct map_projection_reference *ref, double lat, double lon, float *x, float *y)
-{
-    static constexpr double CONSTANTS_RADIUS_OF_EARTH = 6371000; //[m]
-
-	if (!map_projection_initialized(ref)) {
-		return -1;
-	}
-
-    const double lat_rad = lat * (M_PI / 180.0);
-	const double lon_rad = lon * (M_PI / 180.0);
-
-	const double sin_lat = sin(lat_rad);
-	const double cos_lat = cos(lat_rad);
-
-	const double cos_d_lon = cos(lon_rad - ref->lon_rad);
-
-	const double arg = constrain(ref->sin_lat * sin_lat + ref->cos_lat * cos_lat * cos_d_lon, -1.0,  1.0);
-	const double c = acos(arg);
-
-	double k = 1.0;
-
-	if (fabs(c) > 0) {
-		k = (c / sin(c));
-	}
-
-	*x = static_cast<float>(k * (ref->cos_lat * sin_lat - ref->sin_lat * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH);
-	*y = static_cast<float>(k * cos_lat * sin(lon_rad - ref->lon_rad) * CONSTANTS_RADIUS_OF_EARTH);
-
-	return 0;
-}
-
-double GPS_Trajectory_Plotter::constrain(double val, double min, double max)
-{
-    if (val > max) {
-        return max;
-    } else if (val < min) {
-        return min;
-    } else {
-        return val;
-    }
-}
-
 void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data)
 {
     gps_data.timestamp = gps_msg->header.stamp.toSec();
@@ -157,7 +93,7 @@ void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixCon
     gps_data.lla = Eigen::Vector3d(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude);
 
     float x, y;
-    map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
+    geography.map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
     gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
 }
 

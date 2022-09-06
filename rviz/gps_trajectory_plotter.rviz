@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 690
   - Class: rviz/Selection
@@ -102,7 +103,7 @@ Visualization Manager:
         odom:
           Value: true
       Marker Alpha: 1
-      Marker Scale: 1
+      Marker Scale: 100
       Name: TF
       Show Arrows: true
       Show Axes: true
@@ -141,7 +142,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 742.4906616210938
+      Distance: 574.9847412109375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
