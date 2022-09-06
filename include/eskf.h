@@ -19,7 +19,6 @@ class ESKF
         double gyro_noise = 5e-4;
         double acc_bias_noise = 5e-4;
         double gyro_bias_noise = 5e-4;
-
         Eigen::Matrix<double, 18, 18> Fx;
         Eigen::Matrix<double, 18, 12> Fi;
         Eigen::Matrix<double, 12, 12> Qi;
@@ -71,15 +70,9 @@ void ESKF::Init(const GPS_Data& gps_data, State& x)
     x.timestamp = gps_data.timestamp;
     x.position  = gps_data.ned;
 
-    x.PPred.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
-    x.PPred.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
-    x.PPred.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
     x.PEst.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
-    x.cov.block<3, 3>(0, 0) = position_noise * Eigen::Matrix3d::Identity();
-    x.cov.block<3, 3>(3, 3) = velocity_noise * Eigen::Matrix3d::Identity();
-    x.cov.block<3, 3>(6, 6) = posture_noise * Eigen::Matrix3d::Identity();
 }
 
 // https://qiita.com/rsasaki0109/items/e969ad632cf321e25a6a
@@ -97,9 +90,9 @@ void ESKF::Init(const GPS_Data& gps_data, State& x)
 * covariance
 * P_{k} = F_k P_{k-1} F_k^T + L Q_k L^T
 */
-
 void ESKF::Predict(const IMU_Data& imu_data, State& x)
 {
+    // calcurate sampling time
     const double dt = imu_data.timestamp - x.timestamp;
     x.timestamp = imu_data.timestamp;
 
@@ -119,9 +112,8 @@ void ESKF::Predict(const IMU_Data& imu_data, State& x)
     // ccalcurate Jacobian Qi
     Qi = calcurate_Jacobian_Qi(dt);
 
-    // calcurate PPred
-    //x.PPred = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
-    x.cov = Fx * x.cov * Fx.transpose() + Fi * Qi * Fi.transpose();
+    // calcurate PEst
+    x.PEst = Fx * x.PEst * Fx.transpose() + Fi * Qi * Fi.transpose();
 }
 
 Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt)
@@ -181,11 +173,14 @@ void ESKF::Correct(const GPS_Data& gps_data, State& x)
     // calcurate Jacobian H
     H = calcurate_Jacobian_H(x);
 
-    //Eigen::MatrixXd K = x.PPred * H.transpose() * (H * x.PPred * H.transpose() + V).inverse();
-    Eigen::MatrixXd K = x.cov * H.transpose() * (H * x.cov * H.transpose() + V).inverse();
+    // calcurate Klaman Gein
+    Eigen::MatrixXd K = x.PEst * H.transpose() * (H * x.PEst * H.transpose() + V).inverse();
+
+    // calcurate error 
     x.error = K * (Y - X);
-    //x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PPred;
-    x.cov = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.cov;
+
+    // calcurate PEst
+    x.PEst = (Eigen::Matrix<double, 18, 18>::Identity() - K * H) * x.PEst;
 }
 
 Eigen::Matrix<double, 3, 18> ESKF::calcurate_Jacobian_H(State& x)
