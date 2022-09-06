@@ -49,6 +49,9 @@ class ROS_Interface
         GPS_Data gps_data;
         map_projection_reference_s map_ref;
         
+        // ESKF
+        ESKF eskf;
+
         /*
         // gps reference latitude and longitute
         double ref_lati;
@@ -62,8 +65,6 @@ class ROS_Interface
         double kSecondEccentricitySquared = 6.73949674228 * 0.001;
         double kFlattening = 1 / 298.257223563;
         */
-        // ESKF
-        ESKF eskf;
     public:
         ROS_Interface(ros::NodeHandle &n, double lat, double lon);
         ~ROS_Interface();
@@ -76,8 +77,6 @@ class ROS_Interface
 
         // gps pose calcurate{convert from (Lat,Long,Alt) to (North,East,Down)}
         int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
-        int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
-        bool map_projection_initialized(const struct map_projection_reference_s *ref);
         int map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y);
         double constrain(double val, double min, double max);
 
@@ -124,8 +123,7 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     estimated_pose_pub = nh.advertise<nav_msgs::Odometry>("/estimated_pose", 10);
     nav_odom_pub = nh.advertise<nav_msgs::Odometry>("/nav_odom", 10);
 
-    // Subscriber for gazebo simulator
-    //gps_sub = nh.subscribe("/gps/fix", 10, &ROS_Interface::gps_callback, this);
+    // Subscriber
     gps_sub = nh.subscribe("/fix", 10, &ROS_Interface::gps_callback, this);
     imu_sub = nh.subscribe("/imu/data", 10, &ROS_Interface::imu_callback, this);
 
@@ -300,11 +298,6 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
  **********************************************************************/
 int ROS_Interface::map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0)
 {
-	return map_projection_init_timestamped(ref, lat_0, lon_0);
-}
-
-int ROS_Interface::map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0)
-{
     ref->lat_rad = lat_0 * (M_PI / 180.0);
 	ref->lon_rad = lon_0 * (M_PI / 180.0);
 	ref->sin_lat = sin(ref->lat_rad);
@@ -314,16 +307,11 @@ int ROS_Interface::map_projection_init_timestamped(struct map_projection_referen
 	return 0;
 }
 
-bool ROS_Interface::map_projection_initialized(const struct map_projection_reference_s *ref)
-{
-	return ref->init_done;
-}
-
 int ROS_Interface::map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y)
 {
     static constexpr double CONSTANTS_RADIUS_OF_EARTH = 6371000; //[m]
 
-	if (!map_projection_initialized(ref)) {
+    if (!ref->init_done) {
 		return -1;
 	}
 
