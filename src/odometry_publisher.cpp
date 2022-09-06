@@ -125,18 +125,13 @@ void Odometry_Publisher::estimated_pose_callback(const nav_msgs::Odometry &estim
     odom.position.x = estimated_pose_msg.pose.pose.position.x;
     odom.position.y = estimated_pose_msg.pose.pose.position.y;
     odom.position.z = estimated_pose_msg.pose.pose.position.z;
-    odom.orientation.x = estimated_pose_msg.pose.pose.orientation.x;
-    odom.orientation.y = estimated_pose_msg.pose.pose.orientation.y;
-    odom.orientation.z = estimated_pose_msg.pose.pose.orientation.z;
-    odom.orientation.w = estimated_pose_msg.pose.pose.orientation.w;
-    //std::cout << odom.position.x << std::endl;
 
     init_estimated_pose = true;
 }
 
 void Odometry_Publisher::update_odometry()
 {
-    if (sub_linear_vel == true && sub_angular_vel == true && init_estimated_pose == true) {
+    if (sub_linear_vel == true) {
         //std::cout << "update odometry" << std::endl;
         // calculate sampling time
         current_time = ros::Time::now();
@@ -156,12 +151,17 @@ void Odometry_Publisher::update_odometry()
         m.getRPY(roll, pitch, yaw);
         
         // position X, Y, Theta
-        std::cout << odom.position.x << std::endl;
+        std::cout << "odom x" << odom.position.x << std::endl;
+        std::cout << "dt" << dt << std::endl;
+        std::cout << "linear_x" << linear_x << std::endl;
+        std::cout << "angular_z" << angular_z << std::endl;
+        std::cout << "yaw" << yaw << std::endl;
+
         float updated_yaw;
         odom.position.x = odom.position.x + dt * linear_x * cos(yaw);
         odom.position.y = odom.position.y + dt * linear_x * sin(yaw);
         updated_yaw = yaw + angular_z * dt;
-        std::cout << odom.position.x << std::endl;
+        //std::cout << odom.position.x << std::endl;
 
         geometry_msgs::Quaternion updated_orientation = tf::createQuaternionMsgFromYaw(updated_yaw);
         odom.orientation = updated_orientation;

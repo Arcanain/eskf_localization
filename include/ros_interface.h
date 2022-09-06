@@ -208,10 +208,10 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     estimated_pose.pose.pose.position.x = x.position[0];
     estimated_pose.pose.pose.position.y = x.position[1];
     estimated_pose.pose.pose.position.z = 0.0;
-    estimated_pose.pose.pose.orientation.w = x.quaternion.w();
     estimated_pose.pose.pose.orientation.x = x.quaternion.x();
     estimated_pose.pose.pose.orientation.y = x.quaternion.y();
     estimated_pose.pose.pose.orientation.z = x.quaternion.z();
+    estimated_pose.pose.pose.orientation.w = x.quaternion.w();
     estimated_pose_pub.publish(estimated_pose);
 
     // /odom to /base_link transform broadcast
@@ -221,10 +221,10 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     odom_to_baselink_trans.transform.translation.x = x.position[0];
     odom_to_baselink_trans.transform.translation.y = x.position[1];
     odom_to_baselink_trans.transform.translation.z = 0.0;
-    odom_to_baselink_trans.transform.rotation.w = 1.0;
     odom_to_baselink_trans.transform.rotation.x = 0.0;
     odom_to_baselink_trans.transform.rotation.y = 0.0;
     odom_to_baselink_trans.transform.rotation.z = 0.0;
+    odom_to_baselink_trans.transform.rotation.w = 1.0;
     odom_to_baselink_broadcaster.sendTransform(odom_to_baselink_trans);
 
     // publish estimated_path
@@ -234,10 +234,10 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     estimated_point.pose.position.x = x.position[0];
     estimated_point.pose.position.y = x.position[1];
     estimated_point.pose.position.z = 0.0;
-    estimated_point.pose.orientation.w = x.quaternion.w();
     estimated_point.pose.orientation.x = x.quaternion.x();
     estimated_point.pose.orientation.y = x.quaternion.y();
     estimated_point.pose.orientation.z = x.quaternion.z();
+    estimated_point.pose.orientation.w = x.quaternion.w();
 
     estimated_path.poses.push_back(estimated_point);
     estimated_path_pub.publish(estimated_path);

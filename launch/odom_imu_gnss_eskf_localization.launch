@@ -6,10 +6,10 @@
     <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver" output="screen"/>
     <!--/fix(sensor_msgs/NavSatFix) convert to /gps_path(nav_msgs/Path)-->
     <node pkg="gnss_imu_odom_ESKF" name="eskf_localization" type="eskf_localization" output="screen"/>
-    <!-- odometry publisher -->
+    <!-- odometry publisher /odom -->
     <node pkg="gnss_imu_odom_ESKF" name="odometry_publisher" type="odometry_publisher" output="screen"/>
     <!--rosbag play-->
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/ubuntu/Downloads/utbm_robocar_dataset_20190131_noimage.bag"/>
     <!--display rviz-->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gnss_imu_odom_ESKF)/rviz/eskf_localization.rviz" required="true"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gnss_imu_odom_ESKF)/rviz/odom_imu_gnss_eskf_localization.rviz" required="true"/>
 </launch>

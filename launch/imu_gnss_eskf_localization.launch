@@ -9,5 +9,5 @@
     <!--rosbag play-->
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/ubuntu/Downloads/utbm_robocar_dataset_20190131_noimage.bag"/>
     <!--display rviz-->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gnss_imu_odom_ESKF)/rviz/eskf_localization.rviz" required="true"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gnss_imu_odom_ESKF)/rviz/imu_gnss_eskf_localization.rviz" required="true"/>
 </launch>
