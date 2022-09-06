@@ -151,17 +151,10 @@ void Odometry_Publisher::update_odometry()
         m.getRPY(roll, pitch, yaw);
         
         // position X, Y, Theta
-        std::cout << "odom x" << odom.position.x << std::endl;
-        std::cout << "dt" << dt << std::endl;
-        std::cout << "linear_x" << linear_x << std::endl;
-        std::cout << "angular_z" << angular_z << std::endl;
-        std::cout << "yaw" << yaw << std::endl;
-
         float updated_yaw;
         odom.position.x = odom.position.x + dt * linear_x * cos(yaw);
         odom.position.y = odom.position.y + dt * linear_x * sin(yaw);
         updated_yaw = yaw + angular_z * dt;
-        //std::cout << odom.position.x << std::endl;
 
         geometry_msgs::Quaternion updated_orientation = tf::createQuaternionMsgFromYaw(updated_yaw);
         odom.orientation = updated_orientation;

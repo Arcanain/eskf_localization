@@ -25,7 +25,7 @@ class GPS_Trajectory_Plotter
         // gps variable
         GPS_Data gps_data;
         nav_msgs::Path gps_path;
-        map_projection_reference_s map_ref;
+        map_projection_reference map_ref;
 
         // for utbm_robocar_dataset_20190131_noimage.bag
         // Init gps position(latitude, longitude)
@@ -40,10 +40,10 @@ class GPS_Trajectory_Plotter
         void gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg);
 
         // gps pose calcurate
-        int map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0);
-        int map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0);
-        bool map_projection_initialized(const struct map_projection_reference_s *ref);
-        int map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y);
+        int map_projection_init(struct map_projection_reference *ref, double lat_0, double lon_0);
+        int map_projection_init_timestamped(struct map_projection_reference *ref, double lat_0, double lon_0);
+        bool map_projection_initialized(const struct map_projection_reference *ref);
+        int map_projection_project(const struct map_projection_reference *ref, double lat, double lon, float *x, float *y);
         double constrain(double val, double min, double max);
         void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data);
 };
@@ -87,12 +87,12 @@ void GPS_Trajectory_Plotter::gps_callback(const sensor_msgs::NavSatFixConstPtr& 
     gps_path_pub.publish(gps_path);
 }
 
-int GPS_Trajectory_Plotter::map_projection_init(struct map_projection_reference_s *ref, double lat_0, double lon_0)
+int GPS_Trajectory_Plotter::map_projection_init(struct map_projection_reference *ref, double lat_0, double lon_0)
 {
 	return map_projection_init_timestamped(ref, lat_0, lon_0);
 }
 
-int GPS_Trajectory_Plotter::map_projection_init_timestamped(struct map_projection_reference_s *ref, double lat_0, double lon_0)
+int GPS_Trajectory_Plotter::map_projection_init_timestamped(struct map_projection_reference *ref, double lat_0, double lon_0)
 {
     ref->lat_rad = lat_0 * (M_PI / 180.0);
 	ref->lon_rad = lon_0 * (M_PI / 180.0);
@@ -103,12 +103,12 @@ int GPS_Trajectory_Plotter::map_projection_init_timestamped(struct map_projectio
 	return 0;
 }
 
-bool GPS_Trajectory_Plotter::map_projection_initialized(const struct map_projection_reference_s *ref)
+bool GPS_Trajectory_Plotter::map_projection_initialized(const struct map_projection_reference *ref)
 {
 	return ref->init_done;
 }
 
-int GPS_Trajectory_Plotter::map_projection_project(const struct map_projection_reference_s *ref, double lat, double lon, float *x, float *y)
+int GPS_Trajectory_Plotter::map_projection_project(const struct map_projection_reference *ref, double lat, double lon, float *x, float *y)
 {
     static constexpr double CONSTANTS_RADIUS_OF_EARTH = 6371000; //[m]
 

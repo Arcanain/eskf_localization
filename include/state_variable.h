@@ -36,7 +36,7 @@ struct State
 };
 
 /* lat/lon are in radians */
-struct map_projection_reference_s {
+struct map_projection_reference {
 	uint64_t timestamp;
 	double lat_rad;
 	double lon_rad;
