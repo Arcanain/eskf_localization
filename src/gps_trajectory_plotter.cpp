@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include "ros/ros.h"
+#include "tf/tf.h"
+#include "tf/transform_broadcaster.h"
 #include "nav_msgs/Path.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/NavSatFix.h"
@@ -18,11 +20,17 @@ class GPS_Trajectory_Plotter
     private:
         ros::NodeHandle nh;
 
-        // publisher subscriber
+        // Publisher
         ros::Publisher gps_pose_pub;
         ros::Publisher gps_path_pub;
+
+        // Subscriber
         ros::Subscriber gps_sub;
         
+        // tf publish
+        tf::TransformBroadcaster odom_to_baselink_broadcaster;
+        geometry_msgs::TransformStamped odom_to_baselink_trans;
+
         // gps variable
         GPS_Data gps_data;
         nav_msgs::Path gps_path;
@@ -84,6 +92,19 @@ void GPS_Trajectory_Plotter::gps_callback(const sensor_msgs::NavSatFixConstPtr& 
     gps_path.poses.push_back(point);
     gps_pose_pub.publish(point);
     gps_path_pub.publish(gps_path);
+
+    // /odom to /base_link transform broadcast
+    odom_to_baselink_trans.header.stamp = ros::Time::now();
+    odom_to_baselink_trans.header.frame_id = "odom";
+    odom_to_baselink_trans.child_frame_id = "base_link";
+    odom_to_baselink_trans.transform.translation.x = gps_data.ned[0];
+    odom_to_baselink_trans.transform.translation.y = gps_data.ned[1];
+    odom_to_baselink_trans.transform.translation.z = 0.0;
+    odom_to_baselink_trans.transform.rotation.x = 0.0;
+    odom_to_baselink_trans.transform.rotation.y = 0.0;
+    odom_to_baselink_trans.transform.rotation.z = 0.0;
+    odom_to_baselink_trans.transform.rotation.w = 1.0;
+    odom_to_baselink_broadcaster.sendTransform(odom_to_baselink_trans);
 }
 
 void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gps_msg, GPS_Data& gps_data)
