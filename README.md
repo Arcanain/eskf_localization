@@ -20,6 +20,9 @@ ROS : noetic
 - estimatid_path messages /estimatid_path(nav_msgs/Path)
 
 # Software architecture
+- gps trajectory plotter
+![gps_plotter](https://user-images.githubusercontent.com/52307432/188691411-7d640b93-8ab3-4fd3-abe1-8a0d8c39ab70.jpg)
+
 - imu gnss sensor fusion
 ![eskf_localization3](https://user-images.githubusercontent.com/52307432/188689530-40379483-06ed-4476-a668-14b6903ddda0.jpg)
 
