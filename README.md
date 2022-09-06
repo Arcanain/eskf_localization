@@ -59,7 +59,7 @@ roslaunch gnss_imu_odom_ESKF eskf_localization.launch
 ```
 ### Terminal 2
 ```
-rosbag play --clock Downloads/utbm_robocar_dataset_20180719_noimage.bag
+rosbag play --clock Downloads/utbm_robocar_dataset_20190131_noimage.bag
 ```
 ### Terminal3
 ```
