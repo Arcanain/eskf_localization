@@ -88,7 +88,7 @@ roslaunch gnss_imu_odom_ESKF gps_trajectory_plotter.launch
 ```
 cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
-roslaunch gnss_imu_odom_ESKF eskf_localization.launch 
+roslaunch gnss_imu_odom_ESKF imu_gnss_eskf_localization.launch
 ```
 ### result in rviz
 - the green path is made by raw GPS
