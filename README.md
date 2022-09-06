@@ -102,10 +102,11 @@ roslaunch gnss_imu_odom_ESKF imu_gnss_eskf_localization.launch
 ```
 cd catkin_ws/
 source ~/catkin_ws/devel/setup.bash
-roslaunch gnss_imu_odom_ESKF imu_gnss_eskf_localization.launch
+roslaunch gnss_imu_odom_ESKF odom_imu_gnss_eskf_localization.launch
 ```
 ### result in rviz
 - the green path is made by raw GPS
+- the red path is made by raw Odometry
 - the blue path is made by ESKF
 
-![Screenshot at 2022-09-04 23-22-30](https://user-images.githubusercontent.com/52307432/188319301-f849a459-7d64-40b3-9e6a-396494ae1cc7.png)
+![Screenshot at 2022-09-06 23-43-02](https://user-images.githubusercontent.com/52307432/188684954-7c1e0a77-91da-4f79-bac3-b0862a02e7fe.png)
