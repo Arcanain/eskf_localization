@@ -21,7 +21,7 @@ ROS : noetic
 
 # Software architecture
 - imu gnss sensor fusion
-![eskf_localization_2](https://user-images.githubusercontent.com/52307432/188323033-96053739-06f5-4128-8085-68c08dbc4b76.jpg)
+![eskf_localization3](https://user-images.githubusercontent.com/52307432/188689530-40379483-06ed-4476-a668-14b6903ddda0.jpg)
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
