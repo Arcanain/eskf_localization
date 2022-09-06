@@ -110,3 +110,8 @@ roslaunch gnss_imu_odom_ESKF odom_imu_gnss_eskf_localization.launch
 - the blue path is made by ESKF
 
 ![Screenshot at 2022-09-06 23-43-02](https://user-images.githubusercontent.com/52307432/188684954-7c1e0a77-91da-4f79-bac3-b0862a02e7fe.png)
+
+### problem section with outlier
+Todo outlier fix
+![Screenshot at 2022-09-06 23-41-53](https://user-images.githubusercontent.com/52307432/188685227-1558ae77-4b2f-4e2b-bec4-9ad1e7a14785.png)
+
