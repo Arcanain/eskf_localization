@@ -28,8 +28,11 @@ class ESKF
         double pose_noise = 1.2;
         Eigen::Matrix<double, 3, 18> H;
     public:
+        // Init
         ESKF();
         ~ESKF();
+
+        // ESKF state estimation
         void Init(const GPS_Data& gps_data, State& x);
         void Predict(const IMU_Data& imu_data, State& x);
         void Correct(const GPS_Data& gps_data, State& x);
@@ -37,10 +40,9 @@ class ESKF
         void Error_State_Reset(State& x);
 
         // Quaternion
-        Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
-        Eigen::Quaterniond convert_euler_to_quatertion(const double roll, const double pitch, const double yaw);
         Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond& p, const Eigen::Quaterniond& q);
         Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d& vec);
+        Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d euler);
 
         // Predict
         Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt);
@@ -254,7 +256,6 @@ Eigen::Matrix3d ESKF::skewsym_matrix(const Eigen::Vector3d& vec)
     return mat;
 }
 
-
 // https://qiita.com/take4eng/items/ae487c82a6f7d60ceba8
 Eigen::Quaterniond ESKF::euler_to_quatertion(Eigen::Vector3d euler)
 {
@@ -262,13 +263,6 @@ Eigen::Quaterniond ESKF::euler_to_quatertion(Eigen::Vector3d euler)
     double pitch = euler[1];
     double yaw = euler[2];
 
-    Eigen::Quaterniond quad = convert_euler_to_quatertion(roll, pitch, yaw);
-
-    return quad;
-}
-
-Eigen::Quaterniond ESKF::convert_euler_to_quatertion(const double roll, const double pitch, const double yaw)
-{
     double cr = cos(0.5 * roll);
     double sr = sin(0.5 * roll);
     double cp = cos(0.5 * pitch);
