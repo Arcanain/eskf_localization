@@ -113,6 +113,7 @@ class ROS_Interface
  **********************************************************************/
 ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
 {
+    // init ROS
     cout << "ROS_Interface Start!" << endl;
     nh = n;
     init = false;
@@ -128,18 +129,22 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     gps_sub = nh.subscribe("/fix", 10, &ROS_Interface::gps_callback, this);
     imu_sub = nh.subscribe("/imu/data", 10, &ROS_Interface::imu_callback, this);
 
+    // init gps_path
     gps_path.header.frame_id = "map";
     gps_path.header.stamp = ros::Time::now();
     gps_path.header.seq = 0;
 
+    // init estimated_path
     estimated_path.header.frame_id = "map";
     estimated_path.header.stamp = ros::Time::now();
     estimated_path.header.seq = 0;
 
+    // init estimated_pose
     estimated_pose.header.frame_id = "map";
     estimated_pose.child_frame_id = "base_link";
     estimated_pose.header.stamp = ros::Time::now();
 
+    // init state
     x.position = Eigen::Vector3d::Zero();
     x.velocity = Eigen::Vector3d::Zero();
     x.quaternion = Eigen::Quaterniond(0.0, 0.0, 0.0, 0.0);
@@ -151,7 +156,8 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     x.PEst = Eigen::Matrix<double, 18, 18>::Zero();
     x.cov = Eigen::Matrix<double, 18, 18>::Zero();
     x.error = Eigen::Matrix<double, 18, 1>::Zero();
-
+    
+    // init reference lat, lon projection
     map_projection_init(&map_ref, lat, lon);
 }
 

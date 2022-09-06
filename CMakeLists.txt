@@ -32,3 +32,6 @@ target_link_libraries(eskf_localization ${catkin_LIBRARIES})
 
 add_executable(gps_trajectory_plotter src/gps_trajectory_plotter.cpp)
 target_link_libraries(gps_trajectory_plotter ${catkin_LIBRARIES})
+
+add_executable(odometry_publisher src/odometry_publisher.cpp)
+target_link_libraries(odometry_publisher ${catkin_LIBRARIES})
