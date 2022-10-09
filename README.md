@@ -123,6 +123,12 @@ Todo outlier fix
 ![Screenshot at 2022-09-06 23-41-53](https://user-images.githubusercontent.com/52307432/188685227-1558ae77-4b2f-4e2b-bec4-9ad1e7a14785.png)
 
 # Tsukuba Challenge Environment
+## STEP1
+```
+roslaunch gnss_imu_odom_ESKF gnss_convert_path.launch 
+```
+
+## STEP2 
 ```
 roslaunch gnss_imu_odom_ESKF gnss_path_publish.launch
 ```
