@@ -19,6 +19,10 @@ int main(int argc, char**argv)
     double lat0 = 35.056373;
     double lon0 = 137.171547;
 
+    // park
+    //double lat0 = 35.05041567088393;
+    //double lon0 = 137.18095104107948;
+
     ROS_Interface ros_interface(n, lat0, lon0);
 
 	while(ros::ok()){

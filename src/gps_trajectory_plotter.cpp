@@ -38,8 +38,16 @@ class GPS_Trajectory_Plotter
 
         // for utbm_robocar_dataset_20190131_noimage.bag
         // Init gps position(latitude, longitude)
-        double lat0 = 47.5115140833;
-        double lon0 = 6.79310693333;
+        //double lat0 = 47.5115140833;
+        //double lon0 = 6.79310693333;
+
+        // gnss_log_data1
+        double lat0 = 36.08295;
+        double lon0 = 140.07705;
+
+        // gnss_log_data2
+        //double lat0 = 36.08296;
+        //double lon0 = 140.07699;
 
         // GEOGRAPHY Instance
         GEOGRAPHY geography;
@@ -88,7 +96,7 @@ void GPS_Trajectory_Plotter::gps_callback(const sensor_msgs::NavSatFixConstPtr& 
     point.pose.orientation.w = 0;
     point.pose.orientation.x = 0;
     point.pose.orientation.y = 0;
-    point.pose.orientation.z = 0;
+    point.pose.orientation.z = 1.0;
     gps_path.poses.push_back(point);
     gps_pose_pub.publish(point);
     gps_path_pub.publish(gps_path);

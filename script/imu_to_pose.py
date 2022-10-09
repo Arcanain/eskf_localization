@@ -17,4 +17,3 @@ if __name__ == "__main__":
     #Subscriber
     rospy.Subscriber("imu", Imu, imu_callback)
     rospy.spin()
-

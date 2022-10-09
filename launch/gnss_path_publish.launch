@@ -1,0 +1,11 @@
+<launch>
+    <!-- tf satic -->
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
+    <node pkg="tf" type="static_transform_publisher" name="baselink_to_navsat" args="0 0 0 0 0 0 base_link navsat 100" />
+
+    <!--path publish /path-->
+    <node pkg="gnss_imu_odom_ESKF" name="gnss_path_publisher" type="gnss_path_publisher.py" output="screen"/>
+
+    <!--display rviz-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gnss_imu_odom_ESKF)/rviz/gnss_path_publish.rviz" required="true"/>
+</launch>
