@@ -133,4 +133,5 @@ roslaunch gnss_imu_odom_ESKF gnss_convert_path.launch
 roslaunch gnss_imu_odom_ESKF gnss_path_publish.launch
 ```
 
-![Screenshot at 2022-10-09 21-43-36](https://user-images.githubusercontent.com/52307432/194757619-c45b79f9-7aa8-4255-a390-5ad352acce16.png)
+![Screenshot at 2022-10-11 22-11-29](https://user-images.githubusercontent.com/52307432/195100309-4a39ade5-aff9-4eea-b57d-529b6c067527.png)
+
