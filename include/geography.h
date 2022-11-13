@@ -30,7 +30,7 @@ class GEOGRAPHY
         int map_projection_project(const struct map_projection_reference *ref, double lat, double lon, float *x, float *y);
         double constrain(double val, double min, double max);
 
-        /*
+    
         // wgsconversion
         bool lla2enu(double enu[3], const double lla[3], const double ref_lla[3]);
         bool lla2xyz(double xyz[3], const double lla[3]);
@@ -40,6 +40,7 @@ class GEOGRAPHY
         void matrixMultiply(double c[3], const double A[3][3], const double b[3]);
         void rot(double R[3][3], const double angle, const int axis);
 
+        /*
         // ned conversion
         double initial_ecef_x;
         double initial_ecef_y;
@@ -126,11 +127,11 @@ double GEOGRAPHY::constrain(double val, double min, double max)
     }
 }
 
-/*
+
 //------------------------------------------------------------------------------------------------
 // WgsConversions::lla2enu [Public]  --- convert from (Lat,Long,Alt) to (East,North,Up)
 //------------------------------------------------------------------------------------------------
-bool ROS_Interface::lla2enu(double enu[3], const double lla[3], const double ref_lla[3])
+bool GEOGRAPHY::lla2enu(double enu[3], const double lla[3], const double ref_lla[3])
 {
 
     double xyz[3];
@@ -147,7 +148,7 @@ bool ROS_Interface::lla2enu(double enu[3], const double lla[3], const double ref
 //------------------------------------------------------------------------------------------------
 // WgsConversions::lla2xyz [Public]  --- convert from (Lat,Long,Alt) to (ECEF X, ECEF Y, ECEF Z)
 //------------------------------------------------------------------------------------------------
-bool ROS_Interface::lla2xyz(double xyz[3], const double lla[3])
+bool GEOGRAPHY::lla2xyz(double xyz[3], const double lla[3])
 {
 
     if ((lla[0] < -90.0) | (lla[0] > +90.0) | (lla[1] < -180.0) | (lla[1] > +360.0))
@@ -174,7 +175,7 @@ bool ROS_Interface::lla2xyz(double xyz[3], const double lla[3])
 //------------------------------------------------------------------------------------------------
 // WgsConversions::xyz2enu [Public]  --- convert from (ECEF X, ECEF Y, ECEF Z) to (East,North,Up)
 //------------------------------------------------------------------------------------------------
-bool ROS_Interface::xyz2enu(double enu[3], const double xyz[3], const double ref_lla[3])
+bool GEOGRAPHY::xyz2enu(double enu[3], const double xyz[3], const double ref_lla[3])
 {
 
     double ref_xyz[3], diff_xyz[3], R[3][3];
@@ -198,7 +199,7 @@ bool ROS_Interface::xyz2enu(double enu[3], const double xyz[3], const double ref
 //--------------------------------------------------------------------------------------------
 // WgsConversions::enu2xyz [Private]  --- return the 3D rotation matrix to/from ECEF/ENU frame
 //--------------------------------------------------------------------------------------------
-void ROS_Interface::rot3d(double R[3][3], const double reflat, const double reflon)
+void GEOGRAPHY::rot3d(double R[3][3], const double reflat, const double reflon)
 {
 
     double R1[3][3], R2[3][3];
@@ -212,7 +213,7 @@ void ROS_Interface::rot3d(double R[3][3], const double reflat, const double refl
 //------------------------------------------------------------------------------------------------
 // WgsConversions::matrixMultiply [Private]  --- Multiply 3x3 matrix times another 3x3 matrix C=AB
 //------------------------------------------------------------------------------------------------
-void ROS_Interface::matrixMultiply(double C[3][3], const double A[3][3], const double B[3][3])
+void GEOGRAPHY::matrixMultiply(double C[3][3], const double A[3][3], const double B[3][3])
 {
 
     C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0] + A[0][2] * B[2][0];
@@ -229,7 +230,7 @@ void ROS_Interface::matrixMultiply(double C[3][3], const double A[3][3], const d
 //------------------------------------------------------------------------------------------------
 // WgsConversions::matrixMultiply [Private]  --- Multiply 3x3 matrix times a 3x1 vector c=Ab
 //------------------------------------------------------------------------------------------------
-void ROS_Interface::matrixMultiply(double c[3], const double A[3][3], const double b[3])
+void GEOGRAPHY::matrixMultiply(double c[3], const double A[3][3], const double b[3])
 {
 
     c[0] = A[0][0] * b[0] + A[0][1] * b[1] + A[0][2] * b[2];
@@ -240,7 +241,7 @@ void ROS_Interface::matrixMultiply(double c[3], const double A[3][3], const doub
 //------------------------------------------------------------------------------------------------
 // WgsConversions::rot [Private]  --- rotation matrix
 //------------------------------------------------------------------------------------------------
-void ROS_Interface::rot(double R[3][3], const double angle, const int axis)
+void GEOGRAPHY::rot(double R[3][3], const double angle, const int axis)
 {
 
     double cang = cos(angle * M_PI / 180);
@@ -284,13 +285,13 @@ void ROS_Interface::rot(double R[3][3], const double angle, const int axis)
     }
 }
 
-
-double ROS_Interface::deg2Rad(const double degrees)
+/*
+double GEOGRAPHY::deg2Rad(const double degrees)
 {
     return (degrees / 180.0) * M_PI;
 }
 
-void ROS_Interface::geodetic2Ecef(const double latitude, const double longitude, const double altitude, double* x, double* y, double* z)
+void GEOGRAPHY::geodetic2Ecef(const double latitude, const double longitude, const double altitude, double* x, double* y, double* z)
 {
     // Convert geodetic coordinates to ECEF.
     // http://code.google.com/p/pysatel/source/browse/trunk/coord.py?r=22
@@ -302,7 +303,7 @@ void ROS_Interface::geodetic2Ecef(const double latitude, const double longitude,
     *z = (kSemimajorAxis / xi * (1 - kFirstEccentricitySquared) + altitude) * sin(lat_rad);
 }
 
-Eigen::Matrix3d ROS_Interface::nRe(const double lat_radians, const double lon_radians)
+Eigen::Matrix3d GEOGRAPHY::nRe(const double lat_radians, const double lon_radians)
 {
     const double sLat = sin(lat_radians);
     const double sLon = sin(lon_radians);
@@ -323,7 +324,7 @@ Eigen::Matrix3d ROS_Interface::nRe(const double lat_radians, const double lon_ra
     return ret;
 }
 
-void ROS_Interface::ecef2Ned(const double x, const double y, const double z, double* north, double* east, double* down)
+void GEOGRAPHY::ecef2Ned(const double x, const double y, const double z, double* north, double* east, double* down)
 {
     // Converts ECEF coordinate position into local-tangent-plane NED.
     // Coordinates relative to given ECEF coordinate frame.

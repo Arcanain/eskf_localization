@@ -48,6 +48,9 @@ class ROS_Interface
         IMU_Data imu_data;
         GPS_Data gps_data;
         map_projection_reference map_ref;
+        double lat0;
+        double lon0;
+        double alt0;
         
         // ESKF Instance
         ESKF eskf;
@@ -101,18 +104,28 @@ ROS_Interface::ROS_Interface(ros::NodeHandle &n, double lat, double lon)
     estimated_pose.header.stamp = ros::Time::now();
 
     // init state
+    /*
     x.position = Eigen::Vector3d::Zero();
     x.velocity = Eigen::Vector3d::Zero();
-    x.quaternion = Eigen::Quaterniond(0.0, 0.0, 0.0, 0.0);
+    */
+    //x.quaternion = Eigen::Quaterniond(0.0, 0.0, 0.0, 0.0);
+    /*
     x.acc_bias = Eigen::Vector3d::Zero();
     x.gyro_bias = Eigen::Vector3d::Zero();
-    x.gravity = Eigen::Vector3d(0., 0., 9.81007); // ned frame
-    //x.gravity = Eigen::Vector3d(0., 0., -9.81007); // enu frame
+    */
+    
+    //x.gravity = Eigen::Vector3d(0., 0., 9.81007); // ned frame
+    x.gravity = Eigen::Vector3d(0., 0., -9.81007); // enu frame
+    /*
     x.PEst = Eigen::Matrix<double, 18, 18>::Zero();
     x.error = Eigen::Matrix<double, 18, 1>::Zero();
-    
+    */
+
     // init reference lat, lon projection
     geography.map_projection_init(&map_ref, lat, lon);
+    lat0 = lat;
+    lon0 = lon;
+    alt0 = 0.0;
 }
 
 ROS_Interface::~ROS_Interface()
@@ -158,7 +171,7 @@ void ROS_Interface::gps_callback(const sensor_msgs::NavSatFixConstPtr& gps_msg)
     point.pose.orientation.w = 0;
     point.pose.orientation.x = 0;
     point.pose.orientation.y = 0;
-    point.pose.orientation.z = 0;
+    point.pose.orientation.z = 1.0;
     gps_path.poses.push_back(point);
     gps_path_pub.publish(gps_path);
 
@@ -220,17 +233,20 @@ void ROS_Interface::data_conversion_gps(const sensor_msgs::NavSatFixConstPtr& gp
 
     gps_data.lla = Eigen::Vector3d(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude);
 
+    /*
     float x, y;
     geography.map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
     gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
-
-    /* 
-    transform gps latitude and longitude coordinate to position in enu frame(Compute ECEF of NED origin)
+    */
+ 
+    //transform gps latitude and longitude coordinate to position in enu frame(Compute ECEF of NED origin)
     double enu[3];
     double lla[3] = {gps_msg->latitude, gps_msg->longitude, gps_msg->altitude};
-    double ref[3] = {ref_lati, ref_long, ref_alti};
-    lla2enu(enu, lla, ref);
+    double ref[3] = {lat0, lon0, alt0};
+    geography.lla2enu(enu, lla, ref);
+    gps_data.ned = Eigen::Vector3d(enu[0], enu[1], enu[2]);
 
+    /*
     double ecef_x;
     double ecef_y;
     double ecef_z;

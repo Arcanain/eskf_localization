@@ -4,6 +4,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <math.h>
 
 struct IMU_Data
 {

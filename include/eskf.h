@@ -45,11 +45,17 @@ class ESKF
 
         // Predict
         Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Matrix3d R, const double dt);
+        //Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Vector3d gyro, Eigen::Vector3d gyro_bias, Eigen::Matrix3d R, const double dt);
         Eigen::Matrix<double, 18, 12> calcurate_Jacobian_Fi();
         Eigen::Matrix<double, 12, 12> calcurate_Jacobian_Qi(const double dt);
 
         // Correct
         Eigen::Matrix<double, 3, 18> calcurate_Jacobian_H(State& x);
+
+
+        // test code
+        Eigen::Quaterniond getQuaFromAA(Eigen::Vector3d vec);
+        Eigen::Matrix<double, 3, 3> getRotFromAA(Eigen::Vector3d vec);
 };
 
 /***********************************************************************
@@ -101,10 +107,13 @@ void ESKF::Predict(const IMU_Data& imu_data, State& x)
     // state update //
     x.position = x.position + x.velocity * dt + 0.5 * (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt * dt;
     x.velocity = x.velocity + (R * (imu_data.acc - x.acc_bias) + x.gravity) * dt;
-    x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
+    //x.quaternion = kronecker_product(x.quaternion, euler_to_quatertion((imu_data.gyro - x.gyro_bias) * dt));
+    Eigen::Vector3d q_v = (imu_data.gyro - x.gyro_bias) * dt;
+    x.quaternion = x.quaternion * getQuaFromAA(q_v);
 
     // calcurate Jacobian Fx
     Fx = calcurate_Jacobian_Fx(imu_data.acc, x.acc_bias, R, dt);
+    //Fx = calcurate_Jacobian_Fx(imu_data.acc, x.acc_bias, imu_data.gyro, x.gyro_bias, R, dt);
 
     // calcurate Jacobian Fi
     Fi = calcurate_Jacobian_Fi();
@@ -127,6 +136,21 @@ Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, E
 
     return Fx;
 }
+
+/*
+Eigen::Matrix<double, 18, 18> ESKF::calcurate_Jacobian_Fx(Eigen::Vector3d acc, Eigen::Vector3d acc_bias, Eigen::Vector3d gyro, Eigen::Vector3d gyro_bias, Eigen::Matrix3d R, const double dt)
+{
+    Eigen::Matrix<double, 18, 18> Fx = Eigen::Matrix<double, 18, 18>::Identity();
+    Fx.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(3, 6) = - R * skewsym_matrix((acc - acc_bias)) * dt;
+    Fx.block<3, 3>(3, 9) = - R * dt;
+    Fx.block<3, 3>(6, 6) = getRotFromAA((gyro - gyro_bias) * dt);
+    Fx.block<3, 3>(3, 15) = Eigen::Matrix3d::Identity() * dt;
+    Fx.block<3, 3>(6, 12) = - R * dt;
+
+    return Fx;
+}
+*/
 
 Eigen::Matrix<double, 18, 12> ESKF::calcurate_Jacobian_Fi()
 {
@@ -218,7 +242,8 @@ void ESKF::State_update(State& x)
 
     x.position = x.position + error_pos;
     x.velocity = x.velocity + error_vel;
-    x.quaternion = kronecker_product(error_quat, x.quaternion);
+    //x.quaternion = kronecker_product(error_quat, x.quaternion);
+    x.quaternion = x.quaternion * getQuaFromAA(error_ori);
     x.acc_bias = x.acc_bias + error_acc_bias;
     x.gyro_bias = x.gyro_bias + error_gyr_bias;
     // x.gravity = x.gravity + error_gra;
@@ -275,6 +300,55 @@ Eigen::Quaterniond ESKF::euler_to_quatertion(Eigen::Vector3d euler)
     Eigen::Quaterniond q(vq);
     
     return q;
+}
+
+// tranform angleaxis to quaternion
+Eigen::Quaterniond ESKF::getQuaFromAA(Eigen::Vector3d vec)
+{
+    double theta = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    if (theta == 0.0){
+        Eigen::Vector4d vq;
+        vq[0] = 1.0;
+        vq[1] = 0.0;
+        vq[2] = 0.0;
+        vq[3] = 0.0;
+
+        Eigen::Quaterniond q(vq);
+        
+        return q;
+    }
+        
+    Eigen::Vector3d unit_axis = vec / theta;
+
+    double w = cos(0.5 * theta);
+    double sin_t = sin(0.5 * theta);
+    double x = unit_axis[0] * sin_t;
+    double y = unit_axis[1] * sin_t;
+    double z = unit_axis[2] * sin_t;
+
+
+    Eigen::Quaterniond qua(w, x, y, z);
+    qua.normalized();
+
+    return qua;
+}
+
+// get rotation matrix from angleaxis by rodrigues formula
+Eigen::Matrix<double, 3, 3> ESKF::getRotFromAA(Eigen::Vector3d vec)
+{
+    double theta = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    if (0 == theta) {
+        return Eigen::Matrix3d::Identity();
+    }
+        
+    Eigen::Matrix<double, 3, 1> unit_axis = vec / theta;
+    Eigen::Matrix<double, 3, 3> unit_mat = Eigen::Matrix3d::Identity();
+    Eigen::Matrix<double, 3, 3> R;
+    double sin_th = sin(theta);
+    double cos_th = cos(theta);
+    R = unit_mat * cos_th + (1 - cos_th) * unit_axis * unit_axis.transpose() + sin_th * skewsym_matrix(unit_axis);
+
+    return R;
 }
 
 #endif // ESKF

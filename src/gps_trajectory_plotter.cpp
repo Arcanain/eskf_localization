@@ -44,10 +44,12 @@ class GPS_Trajectory_Plotter
         // gnss_log_data1
         double lat0 = 36.08295;
         double lon0 = 140.07705;
+        double alt0 = 0.0;
 
         // gnss_log_data2
         //double lat0 = 36.08296;
         //double lon0 = 140.07699;
+        //double alt0 = 0.0;
 
         // GEOGRAPHY Instance
         GEOGRAPHY geography;
@@ -121,9 +123,18 @@ void GPS_Trajectory_Plotter::data_conversion_gps(const sensor_msgs::NavSatFixCon
 
     gps_data.lla = Eigen::Vector3d(gps_msg->latitude, gps_msg->longitude, gps_msg->altitude);
 
+    /*
     float x, y;
     geography.map_projection_project(&map_ref, gps_msg->latitude, gps_msg->longitude, &x, &y);
     gps_data.ned = Eigen::Vector3d(x, y, -gps_msg->altitude);
+    */
+    
+    //transform gps latitude and longitude coordinate to position in enu frame(Compute ECEF of NED origin)
+    double enu[3];
+    double lla[3] = {gps_msg->latitude, gps_msg->longitude, gps_msg->altitude};
+    double ref[3] = {lat0, lon0, alt0};
+    geography.lla2enu(enu, lla, ref);
+    gps_data.ned = Eigen::Vector3d(enu[0], enu[1], enu[2]);
 }
 
 int main(int argc, char**argv)

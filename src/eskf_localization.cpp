@@ -12,12 +12,23 @@ int main(int argc, char**argv)
     double lon0 = 8.899999999175634;*/
 	
     // utbm_robocar_dataset_20190131_noimage.bag
-    /*double lat0 = 47.5115140833;
-    double lon0 = 6.79310693333;*/
+    //double lat0 = 47.5115140833;
+    //double lon0 = 6.79310693333;
 
     // hirayama 
-    double lat0 = 35.056373;
-    double lon0 = 137.171547;
+    //double lat0 = 35.055033181671;
+    //double lon0 = 137.17151228476;
+
+    // tsukuba environment //double lat0 = 36.08324140969784;
+    //double lon0 = 140.07696509173357;
+    //double lat0 = 36.08324140969784;
+    //double lon0 = 140.07696509173357;
+    double lat0 = 36.08263197663968;
+    double lon0 = 140.07660776463374;
+
+    // tsukuba parking 1
+    //double lat0 = 36.09183981305693;
+    //double lon0 = 140.10840555631;
 
     // park
     //double lat0 = 35.05041567088393;
