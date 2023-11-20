@@ -29,6 +29,114 @@ ROS : noetic
 - odom imu gnss sensor fusion
 ![eskf_localization5](https://user-images.githubusercontent.com/52307432/188694828-6f0ffb00-2a26-43f3-9a96-5f02706c8afe.jpg)
 
+# Class Diagram
+
+```mermaid
+classDiagram
+    class IMU_Data {
+        double timestamp
+        Eigen::Vector3d acc
+        Eigen::Vector3d gyro
+    }
+    class GPS_Data {
+        double timestamp
+        Eigen::Vector3d lla
+        Eigen::Vector3d ned
+    }
+    class State {
+        double timestamp
+        Eigen::Vector3d position
+        Eigen::Vector3d velocity
+        Eigen::Quaterniond quaternion
+        Eigen::Vector3d acc_bias
+        Eigen::Vector3d gyro_bias
+        Eigen::Vector3d gravity
+        Eigen::Matrix<double, 18, 18> PEst
+        Eigen::Matrix<double, 18, 1> error
+    }
+    class map_projection_reference {
+        uint64_t timestamp
+        double lat_rad
+        double lon_rad
+        double sin_lat
+        double cos_lat
+        bool init_done
+    }
+    class GEOGRAPHY {
+        -map_projection_reference* ref
+        +GEOGRAPHY()
+        +~GEOGRAPHY()
+        +int map_projection_init(map_projection_reference*, double, double)
+        +int map_projection_project(map_projection_reference*, double, double, float*, float*)
+        +double constrain(double, double, double)
+        +bool lla2enu(double*, const double*, const double*)
+        +bool lla2xyz(double*, const double*)
+        +bool xyz2enu(double*, const double*, const double*)
+        +void rot3d(double R[3][3], const double, const double)
+        +void matrixMultiply(double C[3][3], const double A[3][3], const double B[3][3])
+        +void matrixMultiply(double c[3], const double A[3][3], const double b[3])
+        +void rot(double R[3][3], const double, const int)
+    }
+    class ESKF {
+        -State x
+        +ESKF()
+        +~ESKF()
+        +void Init(const GPS_Data&, State&)
+        +void Predict(const IMU_Data&, State&)
+        +void Correct(const GPS_Data&, State&)
+        +void State_update(State&)
+        +void Error_State_Reset(State&)
+        +Eigen::Quaterniond kronecker_product(const Eigen::Quaterniond&, const Eigen::Quaterniond&)
+        +Eigen::Matrix3d skewsym_matrix(const Eigen::Vector3d&)
+        +Eigen::Quaterniond euler_to_quatertion(Eigen::Vector3d)
+        +Eigen::Matrix<double, 18, 18> calcurate_Jacobian_Fx(Eigen::Vector3d, Eigen::Vector3d, Eigen::Matrix3d, const double)
+        +Eigen::Matrix<double, 18, 12> calcurate_Jacobian_Fi()
+        +Eigen::Matrix<double, 12, 12> calcurate_Jacobian_Qi(const double)
+        +Eigen::Matrix<double, 3, 18> calcurate_Jacobian_H(State&)
+        +Eigen::Quaterniond getQuaFromAA(Eigen::Vector3d)
+        +Eigen::Matrix<double, 3, 3> getRotFromAA(Eigen::Vector3d)
+    }
+    class ROS_Interface {
+        -ros::NodeHandle nh
+        -bool init
+        -ros::Publisher gps_path_pub
+        -ros::Publisher estimated_path_pub
+        -ros::Publisher estimated_pose_pub
+        -ros::Subscriber gps_sub
+        -ros::Subscriber imu_sub
+        -tf::TransformBroadcaster odom_to_baselink_broadcaster
+        -geometry_msgs::TransformStamped odom_to_baselink_trans
+        -nav_msgs::Path gps_path
+        -nav_msgs::Path estimated_path
+        -nav_msgs::Odometry estimated_pose
+        -State x
+        -IMU_Data imu_data
+        -GPS_Data gps_data
+        -map_projection_reference map_ref
+        -double lat0
+        -double lon0
+        -double alt0
+        -ESKF eskf
+        -GEOGRAPHY geography
+        +ROS_Interface(ros::NodeHandle&, double, double)
+        +~ROS_Interface()
+        +void gps_callback(const sensor_msgs::NavSatFixConstPtr&)
+        +void imu_callback(const sensor_msgs::ImuConstPtr&)
+        +void data_conversion_imu(const sensor_msgs::ImuConstPtr&, IMU_Data&)
+        +void data_conversion_gps(const sensor_msgs::NavSatFixConstPtr&, GPS_Data&)
+    }
+    ROS_Interface --|> ESKF: Uses
+    ROS_Interface --|> GEOGRAPHY: Uses
+    ROS_Interface --|> State: Uses
+    ROS_Interface --|> IMU_Data: Uses
+    ROS_Interface --|> GPS_Data: Uses
+    ROS_Interface --|> map_projection_reference: Uses
+    ESKF --|> State: Uses
+    ESKF --|> IMU_Data: Uses
+    ESKF --|> GPS_Data: Uses
+    GEOGRAPHY --|> map_projection_reference: Uses
+```
+
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
 
