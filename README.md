@@ -137,6 +137,58 @@ classDiagram
     GEOGRAPHY --|> map_projection_reference: Uses
 ```
 
+# FlowChart
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Initialize ROS Node: eskf_localization]
+    B --> C[Create ROS_Interface Object with Initial GPS Coordinates]
+    C --> D[Set Up ROS Publishers and Subscribers]
+    D --> E[Enter Main ROS Loop]
+    E --> F[Check if ROS is OK]
+    F -->|Yes| G[Wait for IMU and GPS Data]
+    G -->|IMU Data Received| H[IMU Callback]
+    G -->|GPS Data Received| I[GPS Callback]
+    H --> J[Data Conversion: IMU]
+    I --> K[Data Conversion: GPS]
+    J --> L[Run ESKF Prediction]
+    K --> M[Check Initialization Status]
+    M -->|Not Initialized| N[Run ESKF Initialization]
+    M -->|Initialized| O[Run ESKF Correction]
+    O --> P[State Update and Error Reset]
+    P --> Q[Publish Estimated Pose and Path]
+    Q --> R[Publish Transform Data]
+    R --> E
+    N --> Q
+
+    subgraph ROS_Interface
+        S[Constructor: Initialize and Set Up ROS Interface]
+        T[gps_callback: Process GPS Data]
+        U[imu_callback: Process IMU Data]
+        V[data_conversion_imu: Convert IMU Data]
+        W[data_conversion_gps: Convert GPS Data]
+    end
+
+    subgraph ESKF
+        X[Init: Initialize ESKF with GPS Data]
+        Y[Predict: Predict State with IMU Data]
+        Z[Correct: Correct State with GPS Data]
+        AA[State_update: Update Estimated State]
+        AB[Error_State_Reset: Reset Error State]
+    end
+
+    S --> T
+    S --> U
+    T --> W
+    U --> V
+    W --> Z
+    V --> Y
+    Y --> E
+    Z --> AA
+    AA --> AB
+    AB --> Q
+```
+
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
 
