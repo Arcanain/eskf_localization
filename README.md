@@ -281,17 +281,3 @@ roslaunch gnss_imu_odom_ESKF odom_imu_gnss_eskf_localization.launch
 ### problem section with outlier
 Todo outlier fix
 ![Screenshot at 2022-09-06 23-41-53](https://user-images.githubusercontent.com/52307432/188685227-1558ae77-4b2f-4e2b-bec4-9ad1e7a14785.png)
-
-# Tsukuba Challenge Environment
-## STEP1
-```
-roslaunch gnss_imu_odom_ESKF gnss_convert_path.launch 
-```
-
-## STEP2 
-```
-roslaunch gnss_imu_odom_ESKF gnss_path_publish.launch
-```
-
-![Screenshot at 2022-10-11 22-11-29](https://user-images.githubusercontent.com/52307432/195100309-4a39ade5-aff9-4eea-b57d-529b6c067527.png)
-
