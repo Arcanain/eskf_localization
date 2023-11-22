@@ -19,16 +19,6 @@ ROS : noetic
 - estimatid_pose messages /estimatid_pose(geometry_msgs/Pose)
 - estimatid_path messages /estimatid_path(nav_msgs/Path)
 
-# Software architecture
-- gps trajectory plotter
-![gps_plotter](https://user-images.githubusercontent.com/52307432/188691411-7d640b93-8ab3-4fd3-abe1-8a0d8c39ab70.jpg)
-
-- imu gnss sensor fusion
-![eskf_localization3](https://user-images.githubusercontent.com/52307432/188689530-40379483-06ed-4476-a668-14b6903ddda0.jpg)
-
-- odom imu gnss sensor fusion
-![eskf_localization5](https://user-images.githubusercontent.com/52307432/188694828-6f0ffb00-2a26-43f3-9a96-5f02706c8afe.jpg)
-
 # Class Diagram
 
 ```mermaid
@@ -188,6 +178,16 @@ flowchart TD
     AA --> AB
     AB --> Q
 ```
+
+# Software architecture
+- gps trajectory plotter
+![gps_plotter](https://user-images.githubusercontent.com/52307432/188691411-7d640b93-8ab3-4fd3-abe1-8a0d8c39ab70.jpg)
+
+- imu gnss sensor fusion
+![eskf_localization3](https://user-images.githubusercontent.com/52307432/188689530-40379483-06ed-4476-a668-14b6903ddda0.jpg)
+
+- odom imu gnss sensor fusion
+![eskf_localization5](https://user-images.githubusercontent.com/52307432/188694828-6f0ffb00-2a26-43f3-9a96-5f02706c8afe.jpg)
 
 # nmea_navsat_driver
 ## STEP1  Install nmea_msgs
